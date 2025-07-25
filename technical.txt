@@ -1,0 +1,81 @@
+Technical Specification
+Product Overview
+NoteBrix is an AI-powered visual learning platform that transforms uploaded course materials (PDFs, DOCX, PPTX, XLSX, etc.) into interactive, hierarchically-organized digital notebooks. The platform uses advanced AI to extract content, generate visual learning components, and provide contextual assistance through an integrated chat system.
+Core Architecture
+Modern full-stack web application built as a monolithic Next.js 15 application optimized for performance and type safety.
+Technology Stack
+
+Frontend Framework: Next.js 15 with TypeScript, React Server Components
+Backend: Next.js API routes with tRPC for type-safe APIs
+Database: Neon PostgreSQL with pgvector extension for vector operations
+AI/ML Services: Google Gemini Pro (text generation), Gemini Vision (image processing)
+File Processing: LangChain document loaders with custom TypeScript implementations
+State Management: Zustand with localStorage persistence
+Styling: Tailwind CSS with custom design system
+Animations: Framer Motion for transitions and interactions
+
+Database schema
+
+API Architecture
+
+Core System Components
+File Processing Engine:
+
+Multi-format document parsing (PDF, DOCX, PPTX, XLSX, CSV, TXT)
+Image extraction and AI-powered description generation
+Content chunking with semantic boundary detection
+Vector embedding generation and storage
+Metadata preservation and source attribution
+
+AI Content Generation:
+
+Topic hierarchy extraction from uploaded materials
+Educational content synthesis with source attribution
+Mathematical expression rendering and code highlighting
+Visual component generation (diagrams, flowcharts, concept maps)
+Adaptive complexity based on user proficiency level
+
+Vector Search System:
+
+Semantic similarity search across subject content
+Contextual retrieval for chat responses
+Multi-modal search (text + image descriptions)
+Relevance scoring and ranking algorithms
+
+Interactive Notebook Interface:
+
+Glass morphism design with depth effects
+Hierarchical navigation (Subject → Topic → Subtopic → Concept)
+Smooth page transitions and animations
+Context-aware chat integration
+Responsive design for desktop and tablet
+
+Security & Privacy
+Data Protection:
+
+End-to-end encryption for uploaded files
+Secure vector embedding storage
+User data isolation between subjects
+GDPR compliance with data export/deletion
+SOC 2 Type II security standards
+
+API Security:
+
+Rate limiting per user/endpoint
+Input validation and sanitization
+CORS configuration
+Request/response logging
+
+Performance Optimization
+Caching Strategy:
+
+Redis for frequently accessed content
+Browser caching for static assets
+Vector embedding cache for search optimization
+Generated content versioning and cache invalidation
+
+Database Optimization:
+
+Connection pooling and query optimization
+Vector index optimization for search performance
+Automated query analysis and index recommendations
