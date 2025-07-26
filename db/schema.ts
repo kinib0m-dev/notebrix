@@ -7,6 +7,7 @@ import {
   uuid,
   boolean,
   index,
+  pgEnum,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 
@@ -190,5 +191,40 @@ export const twoFactorConfirmation = pgTable(
   (table) => ({
     // Index for user lookups
     userIdIdx: index("two_factor_confirmations_user_id_idx").on(table.userId),
+  })
+);
+
+// ================================= SUBJECTS =================================
+export const userEvaluationEnum = pgEnum("user_evaluation", [
+  "beginner",
+  "intermediate",
+  "advanced",
+]);
+
+export const subjects = pgTable(
+  "subjects",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    description: text("description"),
+    userEvaluation: userEvaluationEnum("user_evaluation")
+      .notNull()
+      .default("beginner"),
+    color: text("color").notNull().default("#3B82F6"), // Default blue color
+    isArchived: boolean("is_archived").notNull().default(false),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    // Indexes for better query performance
+    userIdIdx: index("subjects_user_id_idx").on(table.userId),
+    nameIdx: index("subjects_name_idx").on(table.name),
+    createdAtIdx: index("subjects_created_at_idx").on(table.createdAt),
+    isArchivedIdx: index("subjects_is_archived_idx").on(table.isArchived),
   })
 );
