@@ -1,0 +1,83 @@
+PROJECT LOGS - NoteBrix Implementation
+
+=== PHASE 0: Subject-Based Context with Zustand ===
+Date: 2025-07-26
+Prompt: "Let's start the implementation of this project, I've already set up next js, the auth system, and initialised trpc. If you have any questions about the implementation of phase 0: Create the subject based context using zustand, ask them before proceding with the code."
+
+Technical Description: Implementing subject-based context management using Zustand for state management with localStorage persistence. The system will manage the current selected subject and provide a foundation for the hierarchical learning structure (Subject → Topic → Subtopic → Concept).
+
+Implementation Strategy:
+1. Database Schema: Add subjects table with fields for id, userId, name, description, userEvaluation, color, isArchived, createdAt, updatedAt
+2. Zustand Store: Create subject store with current subject state, subjects array, loading states, and persistence
+3. tRPC Procedures: Implement create, getAll, getById, update, archive, delete procedures
+4. React Hooks: Create hooks for easy access to subject procedures
+5. TypeScript Types: Define comprehensive types for subject-related data structures
+
+=== Actions Performed ===
+
+1. DATABASE SCHEMA IMPLEMENTATION:
+   - Created subjects table in db/schema.ts with all required fields
+   - Added proper indexes for performance (userId, name, createdAt, isArchived)
+   - Used UUID for primary key and proper foreign key relationship to users table
+   - Set up default values and constraints
+
+2. TYPESCRIPT TYPES:
+   - Created lib/subjects/types/index.d.ts with comprehensive type definitions
+   - Defined Subject interface, UserEvaluation type, and store interfaces
+   - Added predefined color constants for subject visual differentiation
+   - Separated state and actions interfaces for better organization
+
+3. VALIDATION SCHEMAS:
+   - Created lib/subjects/validation/schemas.ts with Zod validation
+   - Implemented validation for create, update, get, archive, and delete operations
+   - Added proper constraints (name length, description length, color validation)
+   - Exported inferred types for type safety
+
+4. SERVER PROCEDURES:
+   - Created lib/subjects/server/procedures.ts with complete tRPC router
+   - Implemented all CRUD operations: create, getAll, getById, update, archive, delete
+   - Added proper error handling and user ownership validation
+   - Included archived subjects retrieval for future archive management
+
+5. ZUSTAND STORE:
+   - Created lib/subjects/store/useSubjectStore.ts with persistent store
+   - Implemented state management for current subject and subjects array
+   - Added loading states for all operations (creating, updating, deleting)
+   - Configured localStorage persistence with proper serialization for Date objects
+   - Used Immer middleware for immutable state updates
+
+6. REACT HOOKS:
+   - Created lib/subjects/hooks/useSubjects.ts for primary subject management
+   - Implemented optimistic updates and error handling
+   - Added toast notifications for user feedback
+   - Created lib/subjects/hooks/useSubjectActions.ts for navigation and complex actions
+
+7. UTILITY FUNCTIONS:
+   - Created lib/subjects/utils/helpers.ts with comprehensive helper functions
+   - Added color utilities, sorting, filtering, and validation helpers
+   - Implemented date formatting and unique name generation
+   - Added contrast color calculation for accessibility
+
+8. TRPC INTEGRATION:
+   - Updated main tRPC router to include subjects router
+   - Ensured proper type safety across the entire stack
+
+=== File Structure Created ===
+lib/subjects/
+├── validation/
+│   └── schemas.ts
+├── server/
+│   └── procedures.ts
+├── hooks/
+│   ├── useSubjects.ts
+│   └── useSubjectActions.ts
+├── utils/
+│   └── helpers.ts
+├── types/
+│   └── index.d.ts
+└── store/
+    └── useSubjectStore.ts
+
+=== Next Steps ===
+- Frontend components need to be created for subject management UI
+- Integration with main app navigation and onboarding flow
