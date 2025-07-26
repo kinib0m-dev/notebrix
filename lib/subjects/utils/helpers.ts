@@ -126,6 +126,12 @@ export function getContrastColor(hexColor: string): string {
  * Format subject creation date for display
  */
 export function formatSubjectDate(date: Date): string {
+  // Ensure we have a valid Date object
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    console.error("formatSubjectDate received invalid date:", date);
+    return "Invalid date";
+  }
+
   const now = new Date();
   const diffInDays = Math.floor(
     (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)

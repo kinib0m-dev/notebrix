@@ -1,6 +1,5 @@
-import { userEvaluationEnum } from "@/db/schema";
 // User evaluation levels
-export type UserEvaluation = userEvaluationEnum.enumValues[number];
+export type UserEvaluation = "beginner" | "intermediate" | "advanced";
 
 // Subject interface based on database schema
 export interface Subject {

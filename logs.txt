@@ -78,6 +78,123 @@ lib/subjects/
 └── store/
     └── useSubjectStore.ts
 
-=== Next Steps ===
-- Frontend components need to be created for subject management UI
-- Integration with main app navigation and onboarding flow
+
+=== SUBJECTS MANAGEMENT UI & ARCHIVE FUNCTIONALITY ===
+Date: 2025-07-26
+Prompt: "Awesome, now we should have somewhere to edit and delete the subjects, should we create a route "/subjects" ?" + "We should also let the user archive the subject" + UI fixes
+
+Implementation Details:
+1. SUBJECTS MANAGEMENT ROUTE:
+   - Created app/(app)/subjects/page.tsx as the main subjects management page
+   - Implemented comprehensive CRUD interface for all subject operations
+   - Added proper metadata and SSR hydration setup
+
+2. SUBJECTS VIEW COMPONENT:
+   - Created components/app/subjects/SubjectsView.tsx as main management interface
+   - Implemented tabbed interface for Active vs Archived subjects
+   - Added real-time search functionality across subject names and descriptions
+   - Built responsive grid layout with card-based subject display
+   - Added subject count badges and current subject highlighting
+   - Implemented proper click handling to prevent dropdown interference
+
+3. EDIT SUBJECT DIALOG:
+   - Created components/app/subjects/EditSubjectDialog.tsx
+   - Full form validation with pre-populated subject data
+   - Color picker with visual selection interface
+   - Experience level selector with emoji indicators
+   - Proper form reset and error handling
+
+4. ARCHIVE SUBJECT DIALOG:
+   - Created components/app/subjects/ArchiveSubjectDialog.tsx
+   - Informational dialog explaining archive process
+   - Clear explanation of what happens during archiving
+   - Visual subject preview before confirmation
+   - Orange-themed UI to distinguish from delete operations
+
+5. DELETE SUBJECT DIALOG:
+   - Created components/app/subjects/DeleteSubjectDialog.tsx
+   - Safety confirmation requiring user to type subject name
+   - Clear warnings about permanent data loss
+   - Destructive-themed UI with proper color coding
+
+6. ARCHIVE FUNCTIONALITY:
+   - Integrated existing archive server procedures and hooks
+   - Added getArchived tRPC query for fetching archived subjects
+   - Implemented restore functionality using update mutation
+   - Added proper state management for archive/restore operations
+   - Created separate UI treatment for archived subjects (opacity, badges)
+
+7. MISSING UI COMPONENTS:
+   - Created components/ui/alert.tsx for informational alerts
+   - Created components/ui/tabs.tsx for tabbed interface navigation
+   - Added proper theme-aware styling throughout
+
+8. CLICK HANDLING FIX:
+   - Fixed dropdown menu interference with card selection
+   - Separated clickable areas with proper event propagation
+   - Isolated dropdown triggers from card click handlers
+   - Added cursor styling for better UX indication
+
+9. THEME-AWARE DIALOG STYLING:
+   - Fixed liquid glass dialogs for light theme visibility
+   - Updated from fixed transparency to semantic color variables
+   - Changed bg-white/10 to bg-background/95 for proper contrast
+   - Updated input fields to use bg-muted/50 for better visibility
+   - Maintained liquid glass aesthetic with backdrop-blur-md
+   - Used semantic colors (border, foreground, muted) for theme adaptation
+
+10. RESPONSIVE DESIGN:
+    - Mobile-first approach with proper breakpoints
+    - Grid layout adapts from 1 column (mobile) to 3 columns (desktop)
+    - Touch-friendly interface elements
+    - Proper spacing and typography scaling
+
+=== Features Implemented ===
+
+SUBJECTS MANAGEMENT PAGE (/subjects):
+- Tabbed interface: Active Subjects vs Archived Subjects
+- Real-time search functionality
+- Subject count indicators and current subject highlighting
+- Grid-based layout with hover effects and selection states
+- Dropdown menus for each subject with Edit/Archive/Delete actions
+- Empty states for no subjects and no search results
+- Restore functionality for archived subjects
+
+DIALOG SYSTEM:
+- Create Subject: Full form with name, description, color picker, experience level
+- Edit Subject: Pre-populated form with all current subject data
+- Archive Subject: Informational dialog with clear explanation
+- Delete Subject: Safety confirmation with name verification
+- All dialogs use theme-aware liquid glass styling
+
+ARCHIVE SYSTEM:
+- Soft delete functionality preserving all data
+- Separate archived subjects view with restore capability
+- Visual distinction between active and archived subjects
+- Proper state management and optimistic updates
+- Integration with existing subject store and hooks
+
+UI/UX ENHANCEMENTS:
+- Liquid glass aesthetic maintained across all components
+- Theme-aware styling for both light and dark modes
+- Consistent color coding (orange for archive, red for delete)
+- Loading states and error handling throughout
+- Accessibility considerations with proper ARIA labels
+
+=== File Structure Created ===
+app/(app)/subjects/
+└── page.tsx
+
+components/app/subjects/
+├── SubjectsView.tsx
+├── EditSubjectDialog.tsx
+├── ArchiveSubjectDialog.tsx
+└── DeleteSubjectDialog.tsx
+
+components/ui/
+├── alert.tsx
+└── tabs.tsx
+
+=== Files Modified ===
+- components/app/navbar/CreateSubjectDialog.tsx (theme-aware styling)
+- All dialog components updated for light/dark theme compatibility

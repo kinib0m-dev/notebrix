@@ -10,11 +10,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut, ChevronRight } from "lucide-react";
+import { Settings, LogOut, ChevronDown } from "lucide-react";
 import { logOut } from "@/lib/auth/auth.actions";
 import Link from "next/link";
-import { useSidebar } from "../ui/sidebar";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 type UserMenuProps = {
   name?: string | null;
@@ -23,39 +22,33 @@ type UserMenuProps = {
 };
 
 export function UserMenu({ name, email, image }: UserMenuProps) {
-  const { open } = useSidebar();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
-          className={cn(
-            "w-full text-left flex items-center gap-2 p-2 rounded-md hover:bg-sidebar-accent",
-            !open && "justify-center"
-          )}
+        <Button
+          variant="outline"
+          className="bg-white/10 backdrop-blur-md border border-white/20 text-foreground hover:bg-white/20 hover:border-white/30 transition-all duration-300 shadow-lg h-10 px-3"
         >
-          <Avatar className="h-8 w-8">
+          <Avatar className="h-6 w-6 mr-2">
             {image ? (
               <AvatarImage src={image} alt={name || ""} />
             ) : (
-              <AvatarFallback className="bg-primary/10 text-primary">
+              <AvatarFallback className="bg-primary/10 text-primary text-xs">
                 {name?.charAt(0) || email?.charAt(0) || "U"}
               </AvatarFallback>
             )}
           </Avatar>
-          {open && (
-            <>
-              <div className="flex flex-col flex-1 overflow-hidden">
-                <span className="text-sm font-medium truncate">{name}</span>
-                <span className="text-xs text-muted-foreground truncate">
-                  {email}
-                </span>
-              </div>
-              <ChevronRight size={16} className="text-muted-foreground" />
-            </>
-          )}
-        </button>
+          <span className="hidden sm:inline-block truncate max-w-[100px]">
+            {name || email}
+          </span>
+          <ChevronDown className="h-4 w-4 ml-1 opacity-50" />
+        </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
+      <DropdownMenuContent
+        className="w-56 bg-white/10 backdrop-blur-md border border-white/20 shadow-xl"
+        align="end"
+        forceMount
+      >
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{name}</p>
@@ -64,22 +57,22 @@ export function UserMenu({ name, email, image }: UserMenuProps) {
             </p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="bg-white/20" />
         <DropdownMenuGroup>
-          <DropdownMenuItem asChild>
+          <DropdownMenuItem asChild className="hover:bg-white/10">
             <Link href="/settings">
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="bg-white/20" />
         <form
           action={async () => {
             await logOut();
           }}
         >
-          <DropdownMenuItem asChild>
+          <DropdownMenuItem asChild className="hover:bg-white/10">
             <button type="submit" className="w-full cursor-pointer">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
