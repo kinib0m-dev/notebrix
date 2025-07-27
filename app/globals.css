@@ -173,3 +173,228 @@ input:-webkit-autofill:focus {
     box-shadow: 0 0 0 2px oklch(0.75 0.18 210 / 0.2) !important;
   }
 }
+
+/* ================================= GLASS DESIGN SYSTEM ================================= */
+
+/* Glass Page - Main notebook page with liquid glass effect */
+.glass-page {
+  @apply bg-white/80 dark:bg-slate-900/80;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px 0 rgba(31, 38, 135, 0.37),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Glass Card - Main content cards with subtle glass effect */
+.glass-card {
+  @apply bg-white/70 dark:bg-slate-800/70;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 
+    0 4px 16px 0 rgba(31, 38, 135, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  @apply bg-white/80 dark:bg-slate-800/80;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 
+    0 8px 32px 0 rgba(31, 38, 135, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+/* Glass Card Subtle - Lighter version for nested elements */
+.glass-card-subtle {
+  @apply bg-white/50 dark:bg-slate-800/50;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 2px 8px 0 rgba(31, 38, 135, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Glass Card Success - For success states */
+.glass-card-success {
+  @apply bg-green-50/80 dark:bg-green-950/80;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  box-shadow: 
+    0 4px 16px 0 rgba(34, 197, 94, 0.15),
+    inset 0 1px 0 rgba(34, 197, 94, 0.1);
+}
+
+/* Glass Card Error - For error states */
+.glass-card-error {
+  @apply bg-red-50/80 dark:bg-red-950/80;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  box-shadow: 
+    0 4px 16px 0 rgba(239, 68, 68, 0.15),
+    inset 0 1px 0 rgba(239, 68, 68, 0.1);
+}
+
+/* Glass Button - Main action buttons */
+.glass-button {
+  @apply bg-white/60 dark:bg-slate-800/60;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 2px 8px 0 rgba(31, 38, 135, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-button:hover {
+  @apply bg-white/70 dark:bg-slate-800/70;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 4px 16px 0 rgba(31, 38, 135, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.glass-button:active {
+  transform: translateY(0);
+}
+
+/* Glass Button Active - For active state buttons */
+.glass-button-active {
+  @apply bg-blue-50/80 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  box-shadow: 
+    0 4px 16px 0 rgba(59, 130, 246, 0.25),
+    inset 0 1px 0 rgba(59, 130, 246, 0.1);
+}
+
+/* Glass Button Destructive - For delete actions */
+.glass-button-destructive {
+  @apply bg-red-50/80 dark:bg-red-950/80 text-red-700 dark:text-red-300;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  box-shadow: 
+    0 4px 16px 0 rgba(239, 68, 68, 0.25),
+    inset 0 1px 0 rgba(239, 68, 68, 0.1);
+}
+
+/* Glass Input - Form inputs with glass effect */
+.glass-input {
+  @apply bg-white/50 dark:bg-slate-800/50;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    inset 0 1px 4px 0 rgba(31, 38, 135, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-input:focus {
+  @apply bg-white/60 dark:bg-slate-800/60;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  box-shadow: 
+    0 0 0 3px rgba(59, 130, 246, 0.1),
+    inset 0 1px 4px 0 rgba(31, 38, 135, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Glass Progress - Progress bars with glass effect */
+.glass-progress {
+  @apply bg-white/30 dark:bg-slate-800/30;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 1px 2px 0 rgba(31, 38, 135, 0.1);
+}
+
+.glass-progress > div {
+  @apply bg-gradient-to-r from-blue-500 to-indigo-600;
+  box-shadow: 
+    0 2px 8px 0 rgba(59, 130, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Glass Dialog - Dialog overlays */
+.glass-dialog {
+  @apply bg-white/85 dark:bg-slate-900/85;
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 16px 64px 0 rgba(31, 38, 135, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Glass Dropdown - Dropdown menus */
+.glass-dropdown {
+  @apply bg-white/80 dark:bg-slate-800/80;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px 0 rgba(31, 38, 135, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Liquid animation for enhanced interactivity */
+@keyframes liquid-shimmer {
+  0% { 
+    background-position: -200% 0; 
+  }
+  100% { 
+    background-position: 200% 0; 
+  }
+}
+
+.liquid-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: liquid-shimmer 2s infinite;
+}
+
+/* Enhanced hover effects with liquid dynamics */
+.liquid-hover {
+  position: relative;
+  overflow: hidden;
+}
+
+.liquid-hover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.liquid-hover:hover::before {
+  left: 100%;
+}
+
+/* Floating particles effect for upload areas */
+@keyframes float-particle {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg); 
+    opacity: 0.6;
+  }
+  50% { 
+    transform: translateY(-20px) rotate(180deg); 
+    opacity: 1;
+  }
+}
+
+.floating-particle {
+  animation: float-particle 3s ease-in-out infinite;
+}

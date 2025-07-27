@@ -1,4 +1,4 @@
-import { api } from "@/trpc/client";
+import { trpc } from "@/trpc/client";
 import { toast } from "sonner";
 import { useCallback } from "react";
 import type { 
@@ -9,10 +9,10 @@ import type {
 } from "../validation/schemas";
 
 export const useFiles = () => {
-  const utils = api.useUtils();
+  const utils = trpc.useUtils();
 
   // Upload file mutation
-  const uploadFile = api.files.upload.useMutation({
+  const uploadFile = trpc.files.upload.useMutation({
     onSuccess: (data, variables) => {
       toast.success(`File "${data.file.fileName}" uploaded successfully!`);
       
@@ -27,7 +27,7 @@ export const useFiles = () => {
   });
 
   // Delete file mutation
-  const deleteFile = api.files.delete.useMutation({
+  const deleteFile = trpc.files.delete.useMutation({
     onSuccess: (data, variables) => {
       toast.success("File deleted successfully!");
       
@@ -44,7 +44,7 @@ export const useFiles = () => {
 
   // Get files by subject query
   const useFilesBySubject = (input: GetFilesInput) => {
-    return api.files.getBySubject.useQuery(input, {
+    return trpc.files.getBySubject.useQuery(input, {
       staleTime: 5 * 60 * 1000, // 5 minutes
       refetchOnWindowFocus: false,
     });
@@ -52,7 +52,7 @@ export const useFiles = () => {
 
   // Get file by ID query
   const useFileById = (input: GetFileByIdInput) => {
-    return api.files.getById.useQuery(input, {
+    return trpc.files.getById.useQuery(input, {
       staleTime: 5 * 60 * 1000, // 5 minutes
       refetchOnWindowFocus: false,
     });
@@ -60,7 +60,7 @@ export const useFiles = () => {
 
   // Get file statistics query
   const useFileStats = (input: GetFilesInput) => {
-    return api.files.getStats.useQuery(input, {
+    return trpc.files.getStats.useQuery(input, {
       staleTime: 5 * 60 * 1000, // 5 minutes
       refetchOnWindowFocus: false,
     });
