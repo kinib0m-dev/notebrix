@@ -8,6 +8,9 @@ import {
   boolean,
   index,
   pgEnum,
+  jsonb,
+  varchar,
+  customType,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 
@@ -226,5 +229,127 @@ export const subjects = pgTable(
     nameIdx: index("subjects_name_idx").on(table.name),
     createdAtIdx: index("subjects_created_at_idx").on(table.createdAt),
     isArchivedIdx: index("subjects_is_archived_idx").on(table.isArchived),
+  })
+);
+
+// ------------------------------------ VECTOR TYPE ------------------------------------
+const vector = (dimensions: number) =>
+  customType<{
+    data: number[];
+    driverData: string;
+  }>({
+    dataType() {
+      return `vector(${dimensions})`;
+    },
+    toDriver(value) {
+      // Format as Postgres array string for pgvector: e.g. '[0.1, 0.2, ...]'
+      return `[${value.join(",")}]`;
+    },
+    fromDriver(value) {
+      // Convert PG string back to array
+      return value.slice(1, -1).split(",").map(Number);
+    },
+  });
+
+// ================================= FILES =================================
+export const fileStatusEnum = pgEnum("file_status", ["completed", "failed"]);
+
+export const files = pgTable(
+  "files",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    subjectId: text("subject_id")
+      .notNull()
+      .references(() => subjects.id, { onDelete: "cascade" }),
+
+    // File metadata
+    fileName: text("file_name").notNull(),
+    fileType: text("file_type").notNull(),
+    fileSize: integer("file_size").notNull(), // in bytes
+
+    // Processing status
+    status: fileStatusEnum("status").notNull(),
+    processingError: text("processing_error"),
+
+    // Content statistics
+    totalChunks: integer("total_chunks").default(0),
+    totalTokens: integer("total_tokens").default(0),
+    wordCount: integer("word_count").default(0),
+    pageCount: integer("page_count"),
+
+    // Extraction metadata
+    hasImages: boolean("has_images").default(false),
+    imageCount: integer("image_count").default(0),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index("file_user_id_idx").on(table.userId),
+    subjectIdIdx: index("file_subject_id_idx").on(table.subjectId),
+    statusIdx: index("file_status_idx").on(table.status),
+    createdAtIdx: index("file_created_at_idx").on(table.createdAt),
+    fileNameIdx: index("file_file_name_idx").on(table.fileName),
+  })
+);
+
+// ================================= FILE CHUNKS =================================
+export const chunkTypeEnum = pgEnum("chunk_type", [
+  "text",
+  "image",
+  "table",
+  "diagram",
+  // Add more if you feel like we should
+]);
+
+export const fileChunks = pgTable(
+  "file_chunks",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    fileId: text("file_id")
+      .notNull()
+      .references(() => files.id, { onDelete: "cascade" }),
+
+    // Chunk content and metadata
+    content: text("content").notNull(),
+    tokenCount: integer("token_count").notNull(),
+    chunkIndex: integer("chunk_index").notNull(), // Order within document
+    startPosition: integer("start_position"), // Character position in original document
+    endPosition: integer("end_position"),
+
+    // Chunk type and source
+    chunkType: chunkTypeEnum("chunk_type").notNull().default("text"),
+    sourceMetadata: jsonb("source_metadata"), // Page number, section, etc.
+
+    // Vector embedding
+    embedding: vector(768)("embedding"),
+    // Search and retrieval optimization
+    semanticHash: varchar("semantic_hash", { length: 64 }), // For deduplication
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    fileIdIdx: index("file_chunks_file_id_idx").on(table.fileId),
+    chunkIndexIdx: index("file_chunks_chunk_index_idx").on(
+      table.fileId,
+      table.chunkIndex
+    ),
+    embeddingIdx: index("file_chunks_embedding_idx")
+      .using("ivfflat", table.embedding)
+      .with({ lists: 100 }),
+    chunkTypeIdx: index("file_chunks_chunk_type_idx").on(table.chunkType),
+    tokenCountIdx: index("file_chunks_token_count_idx").on(table.tokenCount),
+    semanticHashIdx: index("file_chunks_semantic_hash_idx").on(
+      table.semanticHash
+    ),
+    createdAtIdx: index("file_chunks_created_at_idx").on(table.createdAt),
   })
 );

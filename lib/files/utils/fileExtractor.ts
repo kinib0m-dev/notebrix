@@ -1,3 +1,11 @@
+export interface ImageExtractionResult {
+  description: string;
+  confidence: number;
+  imageType: "diagram" | "chart" | "photo" | "screenshot" | "other";
+  pageNumber?: number;
+  position?: { x: number; y: number; width: number; height: number };
+}
+
 export interface ExtractedFileResult {
   fileName: string;
   fileSize: number;
@@ -6,6 +14,11 @@ export interface ExtractedFileResult {
   pageCount?: number;
   wordCount?: number;
   metadata?: Record<string, unknown>;
+
+  // Add these new fields for image handling
+  images?: ImageExtractionResult[];
+  hasImages?: boolean;
+  imageCount?: number;
 }
 
 // Type definitions for LangChain documents
