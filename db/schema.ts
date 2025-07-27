@@ -12,6 +12,7 @@ import {
   varchar,
   customType,
 } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import type { AdapterAccountType } from "next-auth/adapters";
 
 export const users = pgTable(
@@ -353,3 +354,77 @@ export const fileChunks = pgTable(
     createdAtIdx: index("file_chunks_created_at_idx").on(table.createdAt),
   })
 );
+
+// ================================= RELATIONS =================================
+
+// User relations
+export const usersRelations = relations(users, ({ many }) => ({
+  accounts: many(accounts),
+  sessions: many(sessions),
+  subjects: many(subjects),
+  files: many(files),
+  loginActivities: many(loginActivities),
+  twoFactorConfirmation: many(twoFactorConfirmation),
+}));
+
+// Account relations
+export const accountsRelations = relations(accounts, ({ one }) => ({
+  user: one(users, {
+    fields: [accounts.userId],
+    references: [users.id],
+  }),
+}));
+
+// Session relations
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+  user: one(users, {
+    fields: [sessions.userId],
+    references: [users.id],
+  }),
+}));
+
+// Subject relations
+export const subjectsRelations = relations(subjects, ({ one, many }) => ({
+  user: one(users, {
+    fields: [subjects.userId],
+    references: [users.id],
+  }),
+  files: many(files),
+}));
+
+// File relations
+export const filesRelations = relations(files, ({ one, many }) => ({
+  user: one(users, {
+    fields: [files.userId],
+    references: [users.id],
+  }),
+  subject: one(subjects, {
+    fields: [files.subjectId],
+    references: [subjects.id],
+  }),
+  chunks: many(fileChunks),
+}));
+
+// File chunk relations
+export const fileChunksRelations = relations(fileChunks, ({ one }) => ({
+  file: one(files, {
+    fields: [fileChunks.fileId],
+    references: [files.id],
+  }),
+}));
+
+// Login activity relations
+export const loginActivitiesRelations = relations(loginActivities, ({ one }) => ({
+  user: one(users, {
+    fields: [loginActivities.userId],
+    references: [users.id],
+  }),
+}));
+
+// Two factor confirmation relations
+export const twoFactorConfirmationRelations = relations(twoFactorConfirmation, ({ one }) => ({
+  user: one(users, {
+    fields: [twoFactorConfirmation.userId],
+    references: [users.id],
+  }),
+}));

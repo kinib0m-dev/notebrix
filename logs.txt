@@ -347,3 +347,203 @@ RAG PIPELINE PREPARATION:
 3. PPTX image extraction with specialized parsers
 4. Vector embedding generation for semantic search
 5. Advanced image type classification and specialized prompting
+
+
+=== FILE UPLOAD BACKEND IMPLEMENTATION ===
+Date: 2025-07-27
+Prompt: "Let's now create the backend for the file upload, since we already have the file extractor. Create the validation schemas, procedures, and hooks. For the files I'm thinking that the user can upload or delete, no edit or nothing else."
+
+Technical Description: Complete backend infrastructure for file upload and management with robust validation, processing, and database integration. Files are processed with Gemini AI image descriptions and intelligent chunking for optimal RAG pipeline performance.
+
+Implementation Strategy:
+1. Validation Schemas: Comprehensive input validation with file type and size constraints
+2. tRPC Procedures: Upload, delete, and query operations with proper authorization
+3. React Hooks: Frontend integration with progress tracking and error handling
+4. Database Relations: Proper schema relations for files and chunks
+5. Type Safety: Complete TypeScript type definitions for the files domain
+
+=== Actions Performed ===
+
+1. VALIDATION SCHEMAS:
+   - Created lib/files/validation/schemas.ts with comprehensive input validation
+   - Supported file types: PDF, DOCX, PPTX, Excel, CSV, text, markdown, RTF
+   - Maximum file size: 10MB with proper validation
+   - Base64 content validation to ensure proper file encoding
+   - File extension vs MIME type validation for security
+   - Processing progress tracking schema for frontend updates
+
+2. TRPC PROCEDURES:
+   - Created lib/files/server/procedures.ts with complete file management API
+   - Upload procedure with full processing pipeline integration
+   - Subject ownership validation and security checks
+   - Database transactions for atomic file and chunk creation
+   - Comprehensive error handling with proper TRPC error codes
+   - File statistics generation for dashboard metrics
+   - Delete procedure with cascade chunk removal
+
+3. REACT HOOKS:
+   - Created lib/files/hooks/useFiles.ts for basic file operations
+   - Optimistic updates and cache invalidation strategies
+   - Error handling with user-friendly toast notifications
+   - Helper functions for file validation and base64 conversion
+   - Query hooks with proper stale time and refetch policies
+
+4. FILE ACTIONS HOOK:
+   - Created lib/files/hooks/useFileActions.ts for advanced UI functionality
+   - Progress tracking for file upload with visual feedback
+   - Drag and drop support with proper event handling
+   - Multiple file upload capabilities with batch processing
+   - File type utilities for display names and icons
+   - Confirmation dialogs for file deletion
+
+5. TYPE DEFINITIONS:
+   - Created lib/files/types/index.ts with comprehensive type system
+   - File status, chunk types, and processing stages
+   - File record interfaces with proper relationships
+   - Upload progress tracking types
+   - File statistics interfaces for analytics
+   - Supported file type constants and display utilities
+
+6. DATABASE RELATIONS:
+   - Updated db/schema.ts with proper Drizzle relations
+   - Files to chunks one-to-many relationship
+   - User to files relationship for ownership
+   - Subject to files relationship for organization
+   - Cascade delete configuration for data integrity
+
+7. ROUTER INTEGRATION:
+   - Added files router to main tRPC app router
+   - Proper type generation for frontend consumption
+   - Integration with existing authentication middleware
+
+=== Features Implemented ===
+
+FILE UPLOAD SYSTEM:
+- Multi-format support: PDF, Word, PowerPoint, Excel, CSV, text files
+- 10MB file size limit with validation
+- Base64 encoding for secure file transfer
+- Subject association with ownership validation
+- Atomic database operations with transaction support
+
+FILE PROCESSING PIPELINE:
+- Integration with enhanced file extractor and Gemini AI
+- Intelligent paragraph-based chunking (max 1000 tokens)
+- Image description generation with fallback strategies
+- Comprehensive metadata preservation
+- Processing error handling with graceful degradation
+
+FILE MANAGEMENT API:
+- Upload files with progress tracking
+- Delete files with cascade chunk removal
+- List files by subject with sorting
+- Get file details with chunk information
+- File statistics for dashboard analytics
+- Proper authorization and ownership validation
+
+FRONTEND INTEGRATION:
+- React hooks with optimistic updates
+- Progress tracking with visual feedback
+- Drag and drop file upload support
+- Multiple file upload capabilities
+- File type validation and error handling
+- Toast notifications for user feedback
+
+DATABASE OPTIMIZATION:
+- Proper indexes for query performance
+- Relations for efficient joins
+- Cascade deletes for data integrity
+- Transaction support for atomic operations
+- Comprehensive metadata storage
+
+SECURITY FEATURES:
+- File type validation (extension vs MIME type)
+- User ownership verification
+- Subject access control
+- Input sanitization and validation
+- Secure base64 file handling
+
+=== File Structure Created ===
+lib/files/
+├── validation/
+│   └── schemas.ts           # Input validation and constraints
+├── server/
+│   └── procedures.ts        # tRPC procedures for file operations
+├── hooks/
+│   ├── useFiles.ts         # Basic file management hooks
+│   └── useFileActions.ts   # Advanced UI and interaction hooks
+├── types/
+│   └── index.ts            # TypeScript type definitions
+└── utils/                  # (Previously created)
+    ├── fileExtractor.ts    # Enhanced with Gemini integration
+    ├── chunkingService.ts  # Smart paragraph-based chunking
+    ├── imageExtractor.ts   # Image processing pipeline
+    ├── chunkDatabase.ts    # Database conversion utilities
+    └── geminiService.ts    # AI image description service
+
+=== Files Modified ===
+- trpc/routers/_app.ts (added files router)
+- db/schema.ts (added database relations)
+
+=== API Endpoints Created ===
+- files.upload: Upload and process files
+- files.delete: Delete files and chunks
+- files.getBySubject: List files for a subject
+- files.getById: Get file details with chunks
+- files.getStats: File statistics for analytics
+
+=== Technical Specifications ===
+
+SUPPORTED FILE TYPES:
+- PDF documents (application/pdf)
+- Word documents (.docx, .doc)
+- PowerPoint presentations (.pptx, .ppt)
+- Excel spreadsheets (.xlsx, .xls)
+- CSV files (text/csv)
+- Text files (.txt, .md, .rtf)
+
+PROCESSING CAPABILITIES:
+- Maximum file size: 10MB
+- Paragraph-based chunking with 1000 token limit
+- AI-powered image description generation
+- Sentence boundary preservation for semantic coherence
+- Metadata extraction and preservation
+- Error handling with graceful degradation
+
+PERFORMANCE OPTIMIZATIONS:
+- Database transactions for atomic operations
+- Optimistic updates in React hooks
+- Efficient query patterns with proper indexes
+- Cache invalidation strategies
+- Batch processing for multiple files
+
+TESTING RESULTS:
+✅ Validation schemas working correctly
+✅ File extension validation functioning
+✅ Chunking service creating proper chunks
+✅ Database conversion and validation passing
+✅ File type utilities displaying correctly
+✅ All backend components integrated successfully
+
+=== Usage Example ===
+```typescript
+const { uploadFileComplete, useFilesBySubject } = useFiles();
+
+// Upload a file
+const result = await uploadFileComplete(file, subjectId);
+
+// Get files for a subject
+const { data: files } = useFilesBySubject({ subjectId });
+```
+
+=== Environment Variables Required ===
+- GOOGLE_GENERATIVE_AI_API_KEY: For AI image descriptions
+- Database connection variables for Neon PostgreSQL
+
+=== Ready for Frontend Integration ===
+The complete file upload backend is now ready for frontend implementation with:
+- Comprehensive API endpoints
+- Type-safe React hooks
+- Progress tracking capabilities
+- Error handling and validation
+- Drag and drop support utilities
+- File management interfaces
