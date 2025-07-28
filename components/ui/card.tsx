@@ -15,7 +15,7 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
         // Content and spacing
         "flex flex-col gap-6 py-6 text-card-foreground",
         // Hover effects
-        "transition-all duration-300 hover:shadow-[0_12px_40px_rgba(31,38,135,0.3)] dark:hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)]",
+        "transition-all duration-300",
         className
       )}
       {...props}

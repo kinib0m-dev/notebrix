@@ -1,379 +1,283 @@
-export interface ChunkMetadata {
-  chunkIndex: number;
-  tokenCount: number;
-  startPosition?: number;
-  endPosition?: number;
-  sourceType: 'text' | 'image' | 'table' | 'diagram';
-  pageNumber?: number;
-  paragraphIndex?: number;
-  hasImages?: boolean;
-  imageDescriptions?: string[];
-}
+/**
+ * Smart chunking service for optimal semantic search
+ * Features:
+ * - Paragraph-based chunking with semantic boundary preservation
+ * - Max 1000 tokens per chunk (4 chars ≈ 1 token)
+ * - 75-token overlap between chunks for context continuity
+ * - Word boundary preservation (never split words)
+ * - 150-token minimum chunk size to avoid fragments
+ */
 
-export interface TextChunk {
+export interface ChunkResult {
   content: string;
-  metadata: ChunkMetadata;
+  tokenCount: number;
+  chunkIndex: number;
+  startPosition: number;
+  endPosition: number;
+  chunkType: 'text';
 }
 
 export interface ChunkingOptions {
   maxTokens?: number;
-  preserveSentences?: boolean;
-  mergeShortChunks?: boolean;
-  minChunkTokens?: number;
+  minTokens?: number;
+  overlapTokens?: number;
+  preserveParagraphs?: boolean;
 }
 
 export class SmartChunkingService {
   private static readonly DEFAULT_MAX_TOKENS = 1000;
-  private static readonly DEFAULT_MIN_TOKENS = 50;
-  private static readonly SENTENCE_ENDINGS = /[.!?]+/g;
-  private static readonly PARAGRAPH_SEPARATOR = /\n\s*\n/g;
+  private static readonly DEFAULT_MIN_TOKENS = 150;
+  private static readonly DEFAULT_OVERLAP_TOKENS = 75;
+  private static readonly CHARS_PER_TOKEN = 4;
 
   /**
-   * Estimates token count using word-based approximation
-   * Average: 1 token ≈ 0.75 words, so 1 word ≈ 1.33 tokens
+   * Estimate token count from character count
    */
   private static estimateTokens(text: string): number {
-    const words = text.trim().split(/\s+/).filter(word => word.length > 0);
-    return Math.ceil(words.length * 1.33);
+    return Math.ceil(text.length / this.CHARS_PER_TOKEN);
   }
 
   /**
-   * Splits text into sentences while preserving sentence boundaries
+   * Split text into paragraphs using multiple heuristics
    */
-  private static splitIntoSentences(text: string): string[] {
-    const sentences: string[] = [];
-    const parts = text.split(this.SENTENCE_ENDINGS);
+  private static splitIntoParagraphs(text: string): string[] {
+    // First, split by double newlines (most common paragraph separator)
+    let paragraphs = text.split(/\n\s*\n/);
     
-    for (let i = 0; i < parts.length - 1; i++) {
-      const sentence = parts[i].trim();
-      if (sentence) {
-        // Find the ending punctuation between this part and the next
-        const endingMatch = text.substring(
-          text.indexOf(sentence) + sentence.length
-        ).match(/^[.!?]+/);
+    // If we only got one paragraph, try single newlines with length heuristic
+    if (paragraphs.length === 1) {
+      const lines = text.split('\n');
+      const potentialParagraphs: string[] = [];
+      let currentParagraph = '';
+      
+      for (const line of lines) {
+        const trimmedLine = line.trim();
         
-        sentences.push(sentence + (endingMatch ? endingMatch[0] : '.'));
+        // Empty line indicates paragraph break
+        if (trimmedLine === '') {
+          if (currentParagraph.trim()) {
+            potentialParagraphs.push(currentParagraph.trim());
+            currentParagraph = '';
+          }
+          continue;
+        }
+        
+        // Add line to current paragraph
+        currentParagraph += (currentParagraph ? ' ' : '') + trimmedLine;
       }
+      
+      // Add final paragraph
+      if (currentParagraph.trim()) {
+        potentialParagraphs.push(currentParagraph.trim());
+      }
+      
+      paragraphs = potentialParagraphs.length > 1 ? potentialParagraphs : paragraphs;
     }
     
-    // Add the last part if it doesn't end with punctuation
-    const lastPart = parts[parts.length - 1].trim();
-    if (lastPart) {
-      sentences.push(lastPart);
-    }
-    
-    return sentences.filter(s => s.length > 0);
+    return paragraphs.filter(p => p.trim().length > 0);
   }
 
   /**
-   * Splits a large paragraph into smaller chunks while preserving sentence boundaries
+   * Split large paragraph into smaller chunks at word boundaries
    */
-  private static splitParagraph(
-    paragraph: string,
+  private static splitParagraphIntoChunks(
+    paragraph: string, 
     maxTokens: number,
-    preserveSentences: boolean
+    overlapTokens: number
   ): string[] {
-    if (!preserveSentences) {
-      // Simple word-based splitting if sentence preservation is disabled
-      const words = paragraph.split(/\s+/);
-      const chunks: string[] = [];
-      let currentChunk: string[] = [];
-      let currentTokens = 0;
-
-      for (const word of words) {
-        const wordTokens = this.estimateTokens(word);
-        
-        if (currentTokens + wordTokens > maxTokens && currentChunk.length > 0) {
-          chunks.push(currentChunk.join(' '));
-          currentChunk = [word];
-          currentTokens = wordTokens;
-        } else {
-          currentChunk.push(word);
-          currentTokens += wordTokens;
-        }
-      }
-      
-      if (currentChunk.length > 0) {
-        chunks.push(currentChunk.join(' '));
-      }
-      
-      return chunks;
-    }
-
-    const sentences = this.splitIntoSentences(paragraph);
+    const words = paragraph.split(/\s+/);
     const chunks: string[] = [];
-    let currentChunk: string[] = [];
+    let currentChunk = '';
     let currentTokens = 0;
-
-    for (const sentence of sentences) {
-      const sentenceTokens = this.estimateTokens(sentence);
+    
+    for (let i = 0; i < words.length; i++) {
+      const word = words[i];
+      const wordTokens = this.estimateTokens(word + ' ');
       
-      // If a single sentence exceeds maxTokens, split it by words
-      if (sentenceTokens > maxTokens) {
-        if (currentChunk.length > 0) {
-          chunks.push(currentChunk.join(' '));
-          currentChunk = [];
-          currentTokens = 0;
-        }
+      // If adding this word would exceed limit, save current chunk
+      if (currentTokens + wordTokens > maxTokens && currentChunk.trim()) {
+        chunks.push(currentChunk.trim());
         
-        const wordChunks = this.splitParagraph(sentence, maxTokens, false);
-        chunks.push(...wordChunks);
-        continue;
-      }
-      
-      // If adding this sentence would exceed maxTokens, start a new chunk
-      if (currentTokens + sentenceTokens > maxTokens && currentChunk.length > 0) {
-        chunks.push(currentChunk.join(' '));
-        currentChunk = [sentence];
-        currentTokens = sentenceTokens;
+        // Start new chunk with overlap from previous chunk
+        if (overlapTokens > 0 && chunks.length > 0) {
+          const overlapWords = this.getOverlapWords(currentChunk, overlapTokens);
+          currentChunk = overlapWords + ' ' + word;
+          currentTokens = this.estimateTokens(currentChunk);
+        } else {
+          currentChunk = word;
+          currentTokens = wordTokens;
+        }
       } else {
-        currentChunk.push(sentence);
-        currentTokens += sentenceTokens;
+        currentChunk += (currentChunk ? ' ' : '') + word;
+        currentTokens += wordTokens;
       }
     }
     
-    if (currentChunk.length > 0) {
-      chunks.push(currentChunk.join(' '));
+    // Add final chunk if it has content
+    if (currentChunk.trim()) {
+      chunks.push(currentChunk.trim());
     }
     
     return chunks;
   }
 
   /**
-   * Merges consecutive short chunks to optimize chunk sizes
+   * Get overlap words from the end of a chunk
    */
-  private static mergeShortChunks(
-    chunks: string[],
-    maxTokens: number,
-    _minTokens: number
-  ): string[] {
-    const mergedChunks: string[] = [];
-    let currentChunk = '';
-    let currentTokens = 0;
-
-    for (const chunk of chunks) {
-      const chunkTokens = this.estimateTokens(chunk);
+  private static getOverlapWords(chunk: string, overlapTokens: number): string {
+    const words = chunk.trim().split(/\s+/);
+    let overlapText = '';
+    let tokens = 0;
+    
+    // Work backwards from the end to get overlap
+    for (let i = words.length - 1; i >= 0; i--) {
+      const word = words[i];
+      const wordTokens = this.estimateTokens(word + ' ');
       
-      if (currentTokens + chunkTokens <= maxTokens) {
-        currentChunk = currentChunk ? `${currentChunk}\n\n${chunk}` : chunk;
-        currentTokens += chunkTokens;
-      } else {
-        if (currentChunk) {
-          mergedChunks.push(currentChunk);
-        }
-        currentChunk = chunk;
-        currentTokens = chunkTokens;
+      if (tokens + wordTokens > overlapTokens) {
+        break;
       }
+      
+      overlapText = word + (overlapText ? ' ' + overlapText : '');
+      tokens += wordTokens;
     }
     
-    if (currentChunk) {
+    return overlapText;
+  }
+
+  /**
+   * Merge small chunks with adjacent chunks to meet minimum size requirement
+   */
+  private static mergeSmallChunks(
+    chunks: string[], 
+    minTokens: number,
+    maxTokens: number
+  ): string[] {
+    const mergedChunks: string[] = [];
+    let i = 0;
+    
+    while (i < chunks.length) {
+      let currentChunk = chunks[i];
+      let currentTokens = this.estimateTokens(currentChunk);
+      
+      // If chunk is too small, try to merge with next chunk
+      while (currentTokens < minTokens && i + 1 < chunks.length) {
+        const nextChunk = chunks[i + 1];
+        const nextTokens = this.estimateTokens(nextChunk);
+        
+        // Only merge if combined size doesn't exceed max
+        if (currentTokens + nextTokens <= maxTokens) {
+          currentChunk += '\n\n' + nextChunk;
+          currentTokens += nextTokens;
+          i++; // Skip the merged chunk
+        } else {
+          break;
+        }
+      }
+      
       mergedChunks.push(currentChunk);
+      i++;
     }
     
     return mergedChunks;
   }
 
   /**
-   * Main chunking method that processes text into optimal chunks
+   * Main chunking method
    */
-  static chunkText(text: string, options: ChunkingOptions = {}): TextChunk[] {
+  static chunkText(
+    text: string, 
+    options: ChunkingOptions = {}
+  ): ChunkResult[] {
     const {
       maxTokens = this.DEFAULT_MAX_TOKENS,
-      preserveSentences = true,
-      mergeShortChunks = true,
-      minChunkTokens = this.DEFAULT_MIN_TOKENS
+      minTokens = this.DEFAULT_MIN_TOKENS,
+      overlapTokens = this.DEFAULT_OVERLAP_TOKENS,
+      preserveParagraphs = true
     } = options;
 
-    // Split text into paragraphs
-    const paragraphs = text.split(this.PARAGRAPH_SEPARATOR)
-      .map(p => p.trim())
-      .filter(p => p.length > 0);
+    if (!text || text.trim().length === 0) {
+      return [];
+    }
 
-    const chunks: TextChunk[] = [];
-    let chunkIndex = 0;
+    let rawChunks: string[] = [];
+
+    if (preserveParagraphs) {
+      // Split into paragraphs first
+      const paragraphs = this.splitIntoParagraphs(text);
+      
+      for (const paragraph of paragraphs) {
+        const paragraphTokens = this.estimateTokens(paragraph);
+        
+        if (paragraphTokens <= maxTokens) {
+          // Paragraph fits in one chunk
+          rawChunks.push(paragraph);
+        } else {
+          // Split large paragraph into smaller chunks
+          const paragraphChunks = this.splitParagraphIntoChunks(
+            paragraph, 
+            maxTokens, 
+            overlapTokens
+          );
+          rawChunks.push(...paragraphChunks);
+        }
+      }
+    } else {
+      // Simple word-based chunking without paragraph preservation
+      rawChunks = this.splitParagraphIntoChunks(text, maxTokens, overlapTokens);
+    }
+
+    // Merge small chunks to meet minimum size requirement
+    const mergedChunks = this.mergeSmallChunks(rawChunks, minTokens, maxTokens);
+
+    // Convert to ChunkResult objects with metadata
+    const results: ChunkResult[] = [];
     let currentPosition = 0;
 
-    for (let paragraphIndex = 0; paragraphIndex < paragraphs.length; paragraphIndex++) {
-      const paragraph = paragraphs[paragraphIndex];
-      const paragraphTokens = this.estimateTokens(paragraph);
+    for (let i = 0; i < mergedChunks.length; i++) {
+      const chunk = mergedChunks[i];
+      const tokenCount = this.estimateTokens(chunk);
+      const startPosition = currentPosition;
+      const endPosition = startPosition + chunk.length;
 
-      if (paragraphTokens <= maxTokens) {
-        // Paragraph fits in one chunk
-        chunks.push({
-          content: paragraph,
-          metadata: {
-            chunkIndex: chunkIndex++,
-            tokenCount: paragraphTokens,
-            startPosition: currentPosition,
-            endPosition: currentPosition + paragraph.length,
-            sourceType: 'text',
-            paragraphIndex,
-            hasImages: false,
-            imageDescriptions: []
-          }
-        });
-      } else {
-        // Split paragraph into multiple chunks
-        const paragraphChunks = this.splitParagraph(paragraph, maxTokens, preserveSentences);
-        
-        for (const chunkContent of paragraphChunks) {
-          const tokenCount = this.estimateTokens(chunkContent);
-          chunks.push({
-            content: chunkContent,
-            metadata: {
-              chunkIndex: chunkIndex++,
-              tokenCount,
-              startPosition: currentPosition,
-              endPosition: currentPosition + chunkContent.length,
-              sourceType: 'text',
-              paragraphIndex,
-              hasImages: false,
-              imageDescriptions: []
-            }
-          });
-          currentPosition += chunkContent.length;
-        }
-      }
-      
-      currentPosition += paragraph.length + 2; // +2 for paragraph separator
-    }
-
-    // Merge short chunks if enabled
-    if (mergeShortChunks) {
-      const shortChunks = chunks.filter(chunk => chunk.metadata.tokenCount < minChunkTokens);
-      if (shortChunks.length > 0) {
-        const chunkContents = chunks.map(chunk => chunk.content);
-        const mergedContents = this.mergeShortChunks(chunkContents, maxTokens, minChunkTokens);
-        
-        // Rebuild chunks with merged content
-        const mergedChunks: TextChunk[] = [];
-        let newChunkIndex = 0;
-        
-        for (const content of mergedContents) {
-          const tokenCount = this.estimateTokens(content);
-          mergedChunks.push({
-            content,
-            metadata: {
-              chunkIndex: newChunkIndex++,
-              tokenCount,
-              sourceType: 'text',
-              hasImages: false,
-              imageDescriptions: []
-            }
-          });
-        }
-        
-        return mergedChunks;
-      }
-    }
-
-    return chunks;
-  }
-
-  /**
-   * Adds image description to a chunk or creates a new chunk for it
-   */
-  static addImageToChunk(
-    chunks: TextChunk[],
-    imageDescription: string,
-    insertPosition: number,
-    contextInfo?: { pageNumber?: number; position?: unknown }
-  ): TextChunk[] {
-    if (!imageDescription.trim()) {
-      return chunks; // No description to add
-    }
-
-    // Find the chunk that contains or is closest to the insert position
-    let targetChunkIndex = 0;
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i];
-      if (chunk.metadata.startPosition && chunk.metadata.endPosition) {
-        if (insertPosition >= chunk.metadata.startPosition && insertPosition <= chunk.metadata.endPosition) {
-          targetChunkIndex = i;
-          break;
-        } else if (chunk.metadata.startPosition > insertPosition) {
-          targetChunkIndex = Math.max(0, i - 1);
-          break;
-        }
-      }
-      targetChunkIndex = i;
-    }
-
-    const imageDescriptionText = `[Image Description: ${imageDescription}]`;
-    const imageTokens = this.estimateTokens(imageDescriptionText);
-    
-    const targetChunk = chunks[targetChunkIndex];
-    const availableTokens = this.DEFAULT_MAX_TOKENS - targetChunk.metadata.tokenCount;
-
-    if (availableTokens >= imageTokens) {
-      // Add to existing chunk
-      const updatedChunk: TextChunk = {
-        ...targetChunk,
-        content: `${targetChunk.content}\n\n${imageDescriptionText}`,
-        metadata: {
-          ...targetChunk.metadata,
-          tokenCount: targetChunk.metadata.tokenCount + imageTokens,
-          hasImages: true,
-          imageDescriptions: [...(targetChunk.metadata.imageDescriptions || []), imageDescription],
-          pageNumber: contextInfo?.pageNumber || targetChunk.metadata.pageNumber
-        }
-      };
-      
-      const newChunks = [...chunks];
-      newChunks[targetChunkIndex] = updatedChunk;
-      return newChunks;
-    } else {
-      // Create new chunk for image description
-      const imageChunk: TextChunk = {
-        content: imageDescriptionText,
-        metadata: {
-          chunkIndex: targetChunk.metadata.chunkIndex + 0.5, // Insert between chunks
-          tokenCount: imageTokens,
-          sourceType: 'image',
-          hasImages: true,
-          imageDescriptions: [imageDescription],
-          pageNumber: contextInfo?.pageNumber
-        }
-      };
-      
-      const newChunks = [...chunks];
-      newChunks.splice(targetChunkIndex + 1, 0, imageChunk);
-      
-      // Re-index chunks
-      newChunks.forEach((chunk, index) => {
-        chunk.metadata.chunkIndex = index;
+      results.push({
+        content: chunk,
+        tokenCount,
+        chunkIndex: i,
+        startPosition,
+        endPosition,
+        chunkType: 'text'
       });
-      
-      return newChunks;
+
+      currentPosition = endPosition;
     }
+
+    return results;
   }
 
   /**
-   * Processes text with embedded image descriptions
+   * Get chunking statistics
    */
-  static chunkTextWithImages(
-    text: string,
-    imageDescriptions: Array<{ description: string; position: number; pageNumber?: number; context?: unknown }>,
-    options: ChunkingOptions = {}
-  ): TextChunk[] {
-    // First, create initial text chunks
-    let chunks = this.chunkText(text, options);
-    
-    // Sort image descriptions by position
-    const sortedImages = imageDescriptions
-      .filter(img => img.description.trim())
-      .sort((a, b) => a.position - b.position);
-    
-    // Add each image description to the appropriate chunk
-    for (const image of sortedImages) {
-      chunks = this.addImageToChunk(
-        chunks,
-        image.description,
-        image.position,
-        { pageNumber: image.pageNumber, position: image.context }
-      );
+  static getChunkingStats(chunks: ChunkResult[]) {
+    if (chunks.length === 0) {
+      return {
+        totalChunks: 0,
+        totalTokens: 0,
+        averageTokensPerChunk: 0,
+        minTokens: 0,
+        maxTokens: 0
+      };
     }
-    
-    return chunks;
+
+    const tokenCounts = chunks.map(c => c.tokenCount);
+    const totalTokens = tokenCounts.reduce((sum, count) => sum + count, 0);
+
+    return {
+      totalChunks: chunks.length,
+      totalTokens,
+      averageTokensPerChunk: Math.round(totalTokens / chunks.length),
+      minTokens: Math.min(...tokenCounts),
+      maxTokens: Math.max(...tokenCounts)
+    };
   }
 }

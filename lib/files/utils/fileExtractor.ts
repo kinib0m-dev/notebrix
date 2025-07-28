@@ -1,33 +1,4 @@
-import { ImageExtractionService, ProcessedImage } from './imageExtractor';
-import { SmartChunkingService, TextChunk, ChunkingOptions } from './chunkingService';
-
-export interface ImageExtractionResult {
-  description: string;
-  confidence: number;
-  imageType: "diagram" | "chart" | "photo" | "screenshot" | "other";
-  pageNumber?: number;
-  position?: { x: number; y: number; width: number; height: number };
-}
-
-export interface ExtractedFileResult {
-  fileName: string;
-  fileSize: number;
-  fileType: string;
-  extractedText: string;
-  pageCount?: number;
-  wordCount?: number;
-  metadata?: Record<string, unknown>;
-
-  // Enhanced fields for image and chunk handling
-  images?: ImageExtractionResult[];
-  hasImages?: boolean;
-  imageCount?: number;
-  processedImages?: ProcessedImage[];
-  chunks?: TextChunk[];
-  totalChunks?: number;
-  totalTokens?: number;
-  chunkingOptions?: ChunkingOptions;
-}
+import { ExtractedFileResult } from "../validation/schemas";
 
 // Type definitions for LangChain documents
 interface LangChainDocument {
@@ -236,31 +207,6 @@ export class FileTextExtractor {
       const extractedText = docs.map((doc) => doc.pageContent).join("\n\n");
       const cleanedText = this.cleanText(extractedText);
 
-      // Extract and process images
-      const processedImages = await ImageExtractionService.extractAndProcessImages(file, cleanedText);
-
-      // Create chunks with image descriptions
-      const imageDescriptions = processedImages.map(img => ({
-        description: img.description,
-        position: img.position,
-        pageNumber: img.pageNumber
-      }));
-
-      const chunkingOptions: ChunkingOptions = {
-        maxTokens: 1000,
-        preserveSentences: true,
-        mergeShortChunks: true,
-        minChunkTokens: 50
-      };
-
-      const chunks = SmartChunkingService.chunkTextWithImages(
-        cleanedText,
-        imageDescriptions,
-        chunkingOptions
-      );
-
-      const totalTokens = chunks.reduce((sum, chunk) => sum + chunk.metadata.tokenCount, 0);
-
       return {
         fileName: file.name,
         fileSize: file.size,
@@ -268,27 +214,6 @@ export class FileTextExtractor {
         extractedText: cleanedText,
         pageCount: docs.length,
         wordCount: this.countWords(cleanedText),
-        hasImages: processedImages.length > 0,
-        imageCount: processedImages.length,
-        processedImages,
-        chunks,
-        totalChunks: chunks.length,
-        totalTokens,
-        chunkingOptions,
-        metadata: {
-          originalFileName: file.name,
-          extractedAt: new Date().toISOString(),
-          loader: "PDFLoader",
-          documentMetadata: docs.map((doc) => doc.metadata),
-          imageProcessing: {
-            totalImages: processedImages.length,
-            successfulDescriptions: processedImages.filter(img => img.description).length,
-            models: [...new Set(processedImages.map(img => img.model))],
-            averageConfidence: processedImages.length > 0 
-              ? processedImages.reduce((sum, img) => sum + img.confidence, 0) / processedImages.length 
-              : 0
-          }
-        },
       };
     } catch (error) {
       console.error("Error extracting from PDF:", error);
@@ -314,58 +239,12 @@ export class FileTextExtractor {
       const extractedText = docs.map((doc) => doc.pageContent).join("\n\n");
       const cleanedText = this.cleanText(extractedText);
 
-      // Extract and process images
-      const processedImages = await ImageExtractionService.extractAndProcessImages(file, cleanedText);
-
-      // Create chunks with image descriptions
-      const imageDescriptions = processedImages.map(img => ({
-        description: img.description,
-        position: img.position,
-        pageNumber: img.pageNumber
-      }));
-
-      const chunkingOptions: ChunkingOptions = {
-        maxTokens: 1000,
-        preserveSentences: true,
-        mergeShortChunks: true,
-        minChunkTokens: 50
-      };
-
-      const chunks = SmartChunkingService.chunkTextWithImages(
-        cleanedText,
-        imageDescriptions,
-        chunkingOptions
-      );
-
-      const totalTokens = chunks.reduce((sum, chunk) => sum + chunk.metadata.tokenCount, 0);
-
       return {
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,
         extractedText: cleanedText,
         wordCount: this.countWords(cleanedText),
-        hasImages: processedImages.length > 0,
-        imageCount: processedImages.length,
-        processedImages,
-        chunks,
-        totalChunks: chunks.length,
-        totalTokens,
-        chunkingOptions,
-        metadata: {
-          originalFileName: file.name,
-          extractedAt: new Date().toISOString(),
-          loader: "DocxLoader",
-          documentMetadata: docs.map((doc) => doc.metadata),
-          imageProcessing: {
-            totalImages: processedImages.length,
-            successfulDescriptions: processedImages.filter(img => img.description).length,
-            models: [...new Set(processedImages.map(img => img.model))],
-            averageConfidence: processedImages.length > 0 
-              ? processedImages.reduce((sum, img) => sum + img.confidence, 0) / processedImages.length 
-              : 0
-          }
-        },
       };
     } catch (error) {
       console.error("Error extracting from DOCX:", error);
@@ -391,31 +270,6 @@ export class FileTextExtractor {
       const extractedText = docs.map((doc) => doc.pageContent).join("\n\n");
       const cleanedText = this.cleanText(extractedText);
 
-      // Extract and process images
-      const processedImages = await ImageExtractionService.extractAndProcessImages(file, cleanedText);
-
-      // Create chunks with image descriptions
-      const imageDescriptions = processedImages.map(img => ({
-        description: img.description,
-        position: img.position,
-        pageNumber: img.pageNumber
-      }));
-
-      const chunkingOptions: ChunkingOptions = {
-        maxTokens: 1000,
-        preserveSentences: true,
-        mergeShortChunks: true,
-        minChunkTokens: 50
-      };
-
-      const chunks = SmartChunkingService.chunkTextWithImages(
-        cleanedText,
-        imageDescriptions,
-        chunkingOptions
-      );
-
-      const totalTokens = chunks.reduce((sum, chunk) => sum + chunk.metadata.tokenCount, 0);
-
       return {
         fileName: file.name,
         fileSize: file.size,
@@ -423,28 +277,6 @@ export class FileTextExtractor {
         extractedText: cleanedText,
         pageCount: docs.length,
         wordCount: this.countWords(cleanedText),
-        hasImages: processedImages.length > 0,
-        imageCount: processedImages.length,
-        processedImages,
-        chunks,
-        totalChunks: chunks.length,
-        totalTokens,
-        chunkingOptions,
-        metadata: {
-          originalFileName: file.name,
-          extractedAt: new Date().toISOString(),
-          loader: "PPTXLoader",
-          slideCount: docs.length,
-          documentMetadata: docs.map((doc) => doc.metadata),
-          imageProcessing: {
-            totalImages: processedImages.length,
-            successfulDescriptions: processedImages.filter(img => img.description).length,
-            models: [...new Set(processedImages.map(img => img.model))],
-            averageConfidence: processedImages.length > 0 
-              ? processedImages.reduce((sum, img) => sum + img.confidence, 0) / processedImages.length 
-              : 0
-          }
-        },
       };
     } catch (error) {
       console.error("Error extracting from PPTX:", error);
@@ -459,13 +291,11 @@ export class FileTextExtractor {
 
     try {
       let extractedText: string;
-      let documentMetadata: Record<string, unknown>[] = [];
 
       if (CSVLoader) {
         const loader = new CSVLoader(file);
         const docs: LangChainDocument[] = await loader.load();
         extractedText = docs.map((doc) => doc.pageContent).join("\n");
-        documentMetadata = docs.map((doc) => doc.metadata);
       } else {
         // Fallback CSV parsing
         extractedText = await this.extractTextFallback(file);
@@ -473,36 +303,12 @@ export class FileTextExtractor {
 
       const cleanedText = this.cleanText(extractedText);
 
-      // Create chunks (CSV files typically don't have images)
-      const chunkingOptions: ChunkingOptions = {
-        maxTokens: 1000,
-        preserveSentences: false, // CSV data doesn't have sentences
-        mergeShortChunks: true,
-        minChunkTokens: 50
-      };
-
-      const chunks = SmartChunkingService.chunkText(cleanedText, chunkingOptions);
-      const totalTokens = chunks.reduce((sum, chunk) => sum + chunk.metadata.tokenCount, 0);
-
       return {
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,
         extractedText: cleanedText,
         wordCount: this.countWords(cleanedText),
-        hasImages: false,
-        imageCount: 0,
-        processedImages: [],
-        chunks,
-        totalChunks: chunks.length,
-        totalTokens,
-        chunkingOptions,
-        metadata: {
-          originalFileName: file.name,
-          extractedAt: new Date().toISOString(),
-          loader: CSVLoader ? "CSVLoader" : "Fallback",
-          documentMetadata,
-        },
       };
     } catch (error) {
       console.error("Error extracting from CSV:", error);
@@ -515,58 +321,12 @@ export class FileTextExtractor {
       const text = await file.text();
       const cleanedText = this.cleanText(text);
 
-      // Check for image references in text
-      const processedImages = await ImageExtractionService.extractAndProcessImages(file, cleanedText);
-
-      // Create chunks with any image descriptions found
-      const imageDescriptions = processedImages.map(img => ({
-        description: img.description,
-        position: img.position,
-        pageNumber: img.pageNumber
-      }));
-
-      const chunkingOptions: ChunkingOptions = {
-        maxTokens: 1000,
-        preserveSentences: true,
-        mergeShortChunks: true,
-        minChunkTokens: 50
-      };
-
-      const chunks = SmartChunkingService.chunkTextWithImages(
-        cleanedText,
-        imageDescriptions,
-        chunkingOptions
-      );
-
-      const totalTokens = chunks.reduce((sum, chunk) => sum + chunk.metadata.tokenCount, 0);
-
       return {
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,
         extractedText: cleanedText,
         wordCount: this.countWords(cleanedText),
-        hasImages: processedImages.length > 0,
-        imageCount: processedImages.length,
-        processedImages,
-        chunks,
-        totalChunks: chunks.length,
-        totalTokens,
-        chunkingOptions,
-        metadata: {
-          originalFileName: file.name,
-          extractedAt: new Date().toISOString(),
-          loader: "TextLoader",
-          encoding: "utf-8",
-          imageProcessing: {
-            totalImages: processedImages.length,
-            successfulDescriptions: processedImages.filter(img => img.description).length,
-            models: [...new Set(processedImages.map(img => img.model))],
-            averageConfidence: processedImages.length > 0 
-              ? processedImages.reduce((sum, img) => sum + img.confidence, 0) / processedImages.length 
-              : 0
-          }
-        },
       };
     } catch (error) {
       console.error("Error extracting from text file:", error);
@@ -609,52 +369,16 @@ export class FileTextExtractor {
 
         const cleanedText = this.cleanText(extractedText);
 
-        // Create chunks for Excel data
-        const chunkingOptions: ChunkingOptions = {
-          maxTokens: 1000,
-          preserveSentences: false, // Excel data doesn't have sentences
-          mergeShortChunks: true,
-          minChunkTokens: 50
-        };
-
-        const chunks = SmartChunkingService.chunkText(cleanedText, chunkingOptions);
-        const totalTokens = chunks.reduce((sum, chunk) => sum + chunk.metadata.tokenCount, 0);
-
         return {
           fileName: file.name,
           fileSize: file.size,
           fileType: file.type,
           extractedText: cleanedText,
           wordCount: this.countWords(cleanedText),
-          hasImages: false,
-          imageCount: 0,
-          processedImages: [],
-          chunks,
-          totalChunks: chunks.length,
-          totalTokens,
-          chunkingOptions,
-          metadata: {
-            originalFileName: file.name,
-            extractedAt: new Date().toISOString(),
-            loader: "XLSX",
-            sheetNames: sheets,
-            sheetCount: sheets.length,
-          },
         };
-      } catch (xlsxError) {
+      } catch {
         // Fallback if xlsx is not available
         const extractedText = `Excel file: ${file.name}\nThis file contains spreadsheet data that requires the 'xlsx' library for proper extraction.\nFile size: ${file.size} bytes\n\nTo extract content from Excel files, install: bun add xlsx`;
-
-        // Create basic chunks even for fallback
-        const chunkingOptions: ChunkingOptions = {
-          maxTokens: 1000,
-          preserveSentences: false,
-          mergeShortChunks: true,
-          minChunkTokens: 50
-        };
-
-        const chunks = SmartChunkingService.chunkText(extractedText, chunkingOptions);
-        const totalTokens = chunks.reduce((sum, chunk) => sum + chunk.metadata.tokenCount, 0);
 
         return {
           fileName: file.name,
@@ -662,21 +386,6 @@ export class FileTextExtractor {
           fileType: file.type,
           extractedText: extractedText,
           wordCount: this.countWords(extractedText),
-          hasImages: false,
-          imageCount: 0,
-          processedImages: [],
-          chunks,
-          totalChunks: chunks.length,
-          totalTokens,
-          chunkingOptions,
-          metadata: {
-            originalFileName: file.name,
-            extractedAt: new Date().toISOString(),
-            loader: "BasicFallback",
-            note: "Install xlsx package for better Excel extraction",
-            error:
-              xlsxError instanceof Error ? xlsxError.message : "Unknown error",
-          },
         };
       }
     } catch (error) {

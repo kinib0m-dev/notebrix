@@ -16,7 +16,7 @@ export default function AppLayout({
   image,
 }: AppLayoutProps) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background/90">
       <Navbar name={name} email={email} image={image} />
       <main className="container mx-auto px-4 py-6">{children}</main>
     </div>

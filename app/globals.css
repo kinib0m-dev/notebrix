@@ -239,7 +239,7 @@ input:-webkit-autofill:focus {
 
 /* Glass Button - Main action buttons */
 .glass-button {
-  @apply bg-white/60 dark:bg-slate-800/60;
+  @apply bg-white/60 dark:bg-slate-800/60 text-foreground;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 
@@ -263,7 +263,7 @@ input:-webkit-autofill:focus {
 
 /* Glass Button Active - For active state buttons */
 .glass-button-active {
-  @apply bg-blue-50/80 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300;
+  @apply bg-white/60 dark:bg-slate-800/6 text-foreground;
   backdrop-filter: blur(12px);
   border: 1px solid rgba(59, 130, 246, 0.3);
   box-shadow: 

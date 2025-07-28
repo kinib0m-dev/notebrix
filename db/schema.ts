@@ -283,10 +283,6 @@ export const files = pgTable(
     wordCount: integer("word_count").default(0),
     pageCount: integer("page_count"),
 
-    // Extraction metadata
-    hasImages: boolean("has_images").default(false),
-    imageCount: integer("image_count").default(0),
-
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
@@ -300,14 +296,6 @@ export const files = pgTable(
 );
 
 // ================================= FILE CHUNKS =================================
-export const chunkTypeEnum = pgEnum("chunk_type", [
-  "text",
-  "image",
-  "table",
-  "diagram",
-  // Add more if you feel like we should
-]);
-
 export const fileChunks = pgTable(
   "file_chunks",
   {
@@ -326,7 +314,6 @@ export const fileChunks = pgTable(
     endPosition: integer("end_position"),
 
     // Chunk type and source
-    chunkType: chunkTypeEnum("chunk_type").notNull().default("text"),
     sourceMetadata: jsonb("source_metadata"), // Page number, section, etc.
 
     // Vector embedding
@@ -346,7 +333,6 @@ export const fileChunks = pgTable(
     embeddingIdx: index("file_chunks_embedding_idx")
       .using("ivfflat", table.embedding)
       .with({ lists: 100 }),
-    chunkTypeIdx: index("file_chunks_chunk_type_idx").on(table.chunkType),
     tokenCountIdx: index("file_chunks_token_count_idx").on(table.tokenCount),
     semanticHashIdx: index("file_chunks_semantic_hash_idx").on(
       table.semanticHash
@@ -414,17 +400,23 @@ export const fileChunksRelations = relations(fileChunks, ({ one }) => ({
 }));
 
 // Login activity relations
-export const loginActivitiesRelations = relations(loginActivities, ({ one }) => ({
-  user: one(users, {
-    fields: [loginActivities.userId],
-    references: [users.id],
-  }),
-}));
+export const loginActivitiesRelations = relations(
+  loginActivities,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [loginActivities.userId],
+      references: [users.id],
+    }),
+  })
+);
 
 // Two factor confirmation relations
-export const twoFactorConfirmationRelations = relations(twoFactorConfirmation, ({ one }) => ({
-  user: one(users, {
-    fields: [twoFactorConfirmation.userId],
-    references: [users.id],
-  }),
-}));
+export const twoFactorConfirmationRelations = relations(
+  twoFactorConfirmation,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [twoFactorConfirmation.userId],
+      references: [users.id],
+    }),
+  })
+);

@@ -24,8 +24,8 @@ const sourceSans3 = Source_Sans_3({
 export const metadata: Metadata = {
   metadataBase: new URL("https://domain"),
   title: {
-    default: "Auth",
-    template: `%s | Auth`,
+    default: "Notebrix",
+    template: `%s | Notebrix`,
   },
   description: "Description",
   keywords: [],
@@ -33,11 +33,11 @@ export const metadata: Metadata = {
     icon: "/icon.png",
   },
   openGraph: {
-    title: "Auth",
+    title: "Notebrix",
     description: "Description",
     images: [""],
     url: "https://domain",
-    siteName: "Auth",
+    siteName: "Notebrix",
   },
 };
 

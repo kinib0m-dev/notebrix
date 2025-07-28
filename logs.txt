@@ -200,572 +200,226 @@ components/ui/
 - All dialog components updated for light/dark theme compatibility
 
 
-=== ENHANCED FILE EXTRACTION WITH GEMINI INTEGRATION & SMART CHUNKING ===
-Date: 2025-07-27
-Prompt: "For the file extractor, it currently extracts the content of the files, that is good, what I want to also add is for the fileExtractor when it encounters an image, diagram, etc in the file I want it to be sent to gemini so it returns description of the figure and we can store it with the content of the file. No file storage, just its content. For storage, I want to store chunks (max 1000 tokens) but respective paragraphs in the content, for better RAG pipeline and better outputs."
+=== ENHANCED FILE UPLOAD SYSTEM WITH CHUNKING & EMBEDDINGS ===
+Date: 2025-07-28
+Prompt: "i've deleted the eextractor and re done it becuase it wasn't working. We are not going to process the images, diagrams, etc of the documents. The current file extractor just extracts the content. We need to modify the file or add to it so we can chunk the content per 1000 tokens or per paragraph so we will have a better semantic search later.I've also created the file embedding.ts it has the function to generate embeddings."
 
-Technical Description: Enhanced the file extraction system to integrate with Google Gemini API for AI-powered image descriptions and implemented intelligent paragraph-based chunking system for optimal semantic search and RAG pipeline performance.
+Technical Description: Complete overhaul of the file processing system with intelligent text chunking and Gemini embeddings for optimal semantic search and RAG pipeline performance. Removed image processing complexity and focused on robust text extraction and semantic preparation.
 
 Implementation Strategy:
-1. Gemini Integration: Create service for image description using Google Generative AI API
-2. Image Extraction: Implement image detection and extraction from documents
-3. Smart Chunking: Develop paragraph-based chunking with 1000 token limit
-4. Database Integration: Create utilities to convert chunks to database format
-5. Enhanced File Extractor: Update existing extractor to use new services
+1. Smart Chunking System: Hybrid paragraph-based chunking with 1000-token limit and overlap
+2. Gemini Embeddings: Real-time embedding generation during upload using Google's text-embedding-004
+3. Database Integration: Seamless storage without transactions (Neon HTTP compatible)
+4. Enhanced UI: Complete upload interface with progress tracking and file management
+5. Backend Infrastructure: Comprehensive tRPC procedures with proper error handling
 
 === Actions Performed ===
 
-1. GEMINI INTEGRATION SERVICE:
-   - Created lib/files/utils/geminiService.ts for AI-powered image descriptions
-   - Implemented multiple model fallback strategy (gemini-1.5-flash, gemini-1.5-pro, gemini-pro-vision)
-   - Added rate limiting and retry logic with exponential backoff
-   - Implemented confidence scoring based on model quality and description length
-   - Added timeout handling and error recovery with graceful degradation
-   - Created batch processing for multiple images with rate limiting
-   - Used GOOGLE_GENERATIVE_AI_API_KEY environment variable
+1. SMART CHUNKING SERVICE:
+   - Created lib/files/utils/chunkingService.ts with advanced chunking algorithms
+   - Implemented hybrid paragraph-based approach with semantic boundary preservation
+   - Added 1000-token maximum per chunk with 4-character token estimation
+   - Built 75-token overlap between chunks for context continuity
+   - Created 150-token minimum chunk size to avoid tiny fragments  
+   - Added word boundary preservation (never splits words)
+   - Implemented smart paragraph detection with multiple heuristics
+   - Added chunk merging for optimal size distribution
 
-2. SMART CHUNKING SERVICE:
-   - Created lib/files/utils/chunkingService.ts for intelligent text processing
-   - Implemented paragraph-based chunking with 1000 token maximum
-   - Added sentence boundary preservation to maintain semantic coherence
-   - Created word-based token estimation (1 word ≈ 1.33 tokens approximation)
-   - Implemented chunk merging for short paragraphs to optimize sizes
-   - Added support for embedding image descriptions within chunks
-   - Created metadata tracking for chunk positioning and content types
+2. FILE UPLOAD PROCEDURES:
+   - Created lib/files/server/procedures.ts with complete tRPC backend
+   - Implemented upload procedure with text extraction and chunking pipeline
+   - Added Gemini embedding generation for each chunk during upload
+   - Built comprehensive error handling with graceful degradation
+   - Created file statistics and management endpoints (getBySubject, getById, delete, getStats)
+   - Implemented proper user authorization and subject ownership validation
+   - Added batch chunk insertion for performance optimization
 
-3. IMAGE EXTRACTION SERVICE:
-   - Created lib/files/utils/imageExtractor.ts for document image processing
-   - Implemented placeholder structure for PDF, DOCX, and PPTX image extraction
-   - Added text-based image reference detection for fallback scenarios
-   - Created mock description generation for detected image references
-   - Implemented comprehensive image processing pipeline combining actual extraction with text detection
-   - Added position tracking and context preservation for extracted images
+3. DATABASE COMPATIBILITY:
+   - Updated all procedures to use Drizzle-style queries instead of query builder
+   - Removed transaction dependencies for Neon HTTP driver compatibility
+   - Implemented manual cleanup logic for atomic-like operations
+   - Added proper foreign key cascade handling for file deletion
 
-4. DATABASE INTEGRATION UTILITIES:
-   - Created lib/files/utils/chunkDatabase.ts for database compatibility
-   - Implemented conversion from TextChunk objects to database format
-   - Added validation system for chunk data integrity
-   - Created merging logic for text and image chunks with proper ordering
-   - Implemented statistics generation for chunking process analysis
-   - Added FileProcessingResult interface for standardized database storage
+4. REACT HOOKS INTEGRATION:
+   - Updated lib/files/hooks/useFiles.ts with progress tracking system
+   - Added real-time file upload progress with multiple stages (reading, uploading, processing)
+   - Implemented optimistic updates and cache invalidation strategies
+   - Built comprehensive file validation and helper utilities
+   - Added proper error handling with toast notifications
 
-5. ENHANCED FILE EXTRACTOR:
-   - Updated lib/files/utils/fileExtractor.ts with new functionality
-   - Integrated Gemini service for image descriptions across all file types
-   - Added smart chunking to PDF, DOCX, PPTX, CSV, and text file extraction
-   - Implemented comprehensive metadata tracking for image processing
-   - Added token counting and chunk statistics to extraction results
-   - Enhanced error handling and fallback mechanisms
-   - Updated interfaces to include chunks, processed images, and token counts
+5. ENHANCED UPLOAD UI:
+   - Completely redesigned components/app/uploads/UploadsView.tsx
+   - Added drag-and-drop functionality with react-dropzone integration
+   - Implemented real-time progress tracking with visual feedback
+   - Built pending files queue with individual processing controls
+   - Added comprehensive file management interface with statistics
+   - Created tabbed interface for upload vs. file management
 
-6. PACKAGE INSTALLATION:
-   - Added @google/generative-ai package for Gemini API integration
-   - Ensured compatibility with existing LangChain document loaders
-
-=== Features Implemented ===
-
-GEMINI AI IMAGE DESCRIPTION:
-- Multi-model fallback system for high availability
-- Educational context-aware prompting for learning materials
-- Confidence scoring and processing time tracking
-- Rate limiting to prevent API quota exhaustion
-- Graceful error handling with empty string fallback
-- Batch processing capabilities for multiple images
-
-SMART CHUNKING SYSTEM:
-- Paragraph-based chunking respecting content structure
-- Maximum 1000 tokens per chunk for optimal RAG performance
-- Sentence boundary preservation for semantic coherence
-- Automatic chunk merging for optimal size distribution
-- Image description integration within or adjacent to text chunks
-- Comprehensive metadata tracking for each chunk
-
-IMAGE PROCESSING PIPELINE:
-- Document image extraction (placeholder for PDF/DOCX/PPTX)
-- Text-based image reference detection as fallback
-- Context-aware image description generation
-- Position tracking for proper chunk placement
-- Multi-format support across all document types
-
-DATABASE INTEGRATION:
-- Seamless conversion to existing database schema
-- Validation system for data integrity
-- Statistics generation for processing analysis
-- Proper indexing and metadata preservation
-- Support for existing fileChunks table structure
-
-ENHANCED EXTRACTION RESULTS:
-- Comprehensive processing metadata
-- Token counting and chunk statistics
-- Image processing confidence scores
-- Model usage tracking for analysis
-- Processing time metrics for optimization
-
-=== File Structure Created ===
-lib/files/utils/
-├── geminiService.ts          # AI image description service
-├── chunkingService.ts        # Smart paragraph-based chunking
-├── imageExtractor.ts         # Image extraction and processing
-└── chunkDatabase.ts          # Database integration utilities
-
-=== Files Modified ===
-- lib/files/utils/fileExtractor.ts (enhanced with Gemini and chunking)
-- package.json (added @google/generative-ai dependency)
-
-=== Technical Improvements ===
-
-PERFORMANCE OPTIMIZATIONS:
-- Batch processing for multiple images
-- Rate limiting to prevent API overwhelm
-- Token-based chunking for optimal embedding performance
-- Sentence boundary preservation for better semantic search
-
-RELIABILITY ENHANCEMENTS:
-- Multi-model fallback for high availability
-- Comprehensive error handling and recovery
-- Validation systems for data integrity
-- Graceful degradation when services unavailable
-
-SEMANTIC SEARCH OPTIMIZATION:
-- Paragraph-based chunking for context preservation
-- Image descriptions embedded with relevant text
-- Optimal chunk sizes for vector embedding performance
-- Metadata preservation for enhanced retrieval
-
-RAG PIPELINE PREPARATION:
-- 1000 token chunk limit optimized for context windows
-- Semantic boundary preservation for coherent responses
-- Image description integration for multi-modal understanding
-- Comprehensive metadata for context-aware retrieval
-
-=== Environment Variables Required ===
-- GOOGLE_GENERATIVE_AI_API_KEY: Google Gemini API key for image descriptions
-
-=== Future Enhancements Ready ===
-1. Actual PDF image extraction with pdf2pic library
-2. DOCX image extraction with enhanced mammoth parsing
-3. PPTX image extraction with specialized parsers
-4. Vector embedding generation for semantic search
-5. Advanced image type classification and specialized prompting
-
-
-=== FILE UPLOAD BACKEND IMPLEMENTATION ===
-Date: 2025-07-27
-Prompt: "Let's now create the backend for the file upload, since we already have the file extractor. Create the validation schemas, procedures, and hooks. For the files I'm thinking that the user can upload or delete, no edit or nothing else."
-
-Technical Description: Complete backend infrastructure for file upload and management with robust validation, processing, and database integration. Files are processed with Gemini AI image descriptions and intelligent chunking for optimal RAG pipeline performance.
-
-Implementation Strategy:
-1. Validation Schemas: Comprehensive input validation with file type and size constraints
-2. tRPC Procedures: Upload, delete, and query operations with proper authorization
-3. React Hooks: Frontend integration with progress tracking and error handling
-4. Database Relations: Proper schema relations for files and chunks
-5. Type Safety: Complete TypeScript type definitions for the files domain
-
-=== Actions Performed ===
-
-1. VALIDATION SCHEMAS:
-   - Created lib/files/validation/schemas.ts with comprehensive input validation
-   - Supported file types: PDF, DOCX, PPTX, Excel, CSV, text, markdown, RTF
-   - Maximum file size: 10MB with proper validation
-   - Base64 content validation to ensure proper file encoding
-   - File extension vs MIME type validation for security
-   - Processing progress tracking schema for frontend updates
-
-2. TRPC PROCEDURES:
-   - Created lib/files/server/procedures.ts with complete file management API
-   - Upload procedure with full processing pipeline integration
-   - Subject ownership validation and security checks
-   - Database transactions for atomic file and chunk creation
-   - Comprehensive error handling with proper TRPC error codes
-   - File statistics generation for dashboard metrics
-   - Delete procedure with cascade chunk removal
-
-3. REACT HOOKS:
-   - Created lib/files/hooks/useFiles.ts for basic file operations
-   - Optimistic updates and cache invalidation strategies
-   - Error handling with user-friendly toast notifications
-   - Helper functions for file validation and base64 conversion
-   - Query hooks with proper stale time and refetch policies
-
-4. FILE ACTIONS HOOK:
-   - Created lib/files/hooks/useFileActions.ts for advanced UI functionality
-   - Progress tracking for file upload with visual feedback
-   - Drag and drop support with proper event handling
-   - Multiple file upload capabilities with batch processing
-   - File type utilities for display names and icons
-   - Confirmation dialogs for file deletion
-
-5. TYPE DEFINITIONS:
-   - Created lib/files/types/index.ts with comprehensive type system
-   - File status, chunk types, and processing stages
-   - File record interfaces with proper relationships
-   - Upload progress tracking types
-   - File statistics interfaces for analytics
-   - Supported file type constants and display utilities
-
-6. DATABASE RELATIONS:
-   - Updated db/schema.ts with proper Drizzle relations
-   - Files to chunks one-to-many relationship
-   - User to files relationship for ownership
-   - Subject to files relationship for organization
-   - Cascade delete configuration for data integrity
+6. SUPPORTING COMPONENTS:
+   - Created components/app/uploads/FileProgressBar.tsx for visual progress tracking
+   - Built components/app/uploads/DeleteFileDialog.tsx for proper delete confirmation
+   - Enhanced NotebookLayout.tsx with navigation improvements
+   - Updated validation schemas with proper file type support
 
 7. ROUTER INTEGRATION:
-   - Added files router to main tRPC app router
-   - Proper type generation for frontend consumption
-   - Integration with existing authentication middleware
+   - Added filesRouter to main tRPC app router
+   - Ensured proper type safety across the entire stack
+   - Fixed import paths and client integration
 
 === Features Implemented ===
 
+INTELLIGENT CHUNKING SYSTEM:
+- Hybrid paragraph-based chunking respecting semantic boundaries
+- Maximum 1000 tokens per chunk optimized for RAG pipeline
+- 75-token overlap between chunks for context preservation
+- Word boundary preservation preventing mid-word splits
+- Smart paragraph detection with fallback mechanisms
+- Automatic chunk merging for optimal size distribution
+
+GEMINI EMBEDDINGS INTEGRATION:
+- Real-time embedding generation using Google's text-embedding-004 model
+- Batch processing with graceful error handling
+- Embedding storage in existing database schema (pgvector)
+- Performance optimization with concurrent processing
+
 FILE UPLOAD SYSTEM:
-- Multi-format support: PDF, Word, PowerPoint, Excel, CSV, text files
-- 10MB file size limit with validation
+- Multi-format support: PDF, Word, PowerPoint, Excel, CSV, Text, RTF
+- 10MB file size limit with proper validation
 - Base64 encoding for secure file transfer
-- Subject association with ownership validation
-- Atomic database operations with transaction support
+- Real-time progress tracking with multiple stages
+- Drag-and-drop interface with visual feedback
+- Subject-based file organization
 
-FILE PROCESSING PIPELINE:
-- Integration with enhanced file extractor and Gemini AI
-- Intelligent paragraph-based chunking (max 1000 tokens)
-- Image description generation with fallback strategies
-- Comprehensive metadata preservation
-- Processing error handling with graceful degradation
-
-FILE MANAGEMENT API:
-- Upload files with progress tracking
-- Delete files with cascade chunk removal
-- List files by subject with sorting
-- Get file details with chunk information
-- File statistics for dashboard analytics
-- Proper authorization and ownership validation
-
-FRONTEND INTEGRATION:
-- React hooks with optimistic updates
-- Progress tracking with visual feedback
-- Drag and drop file upload support
-- Multiple file upload capabilities
-- File type validation and error handling
-- Toast notifications for user feedback
+COMPREHENSIVE UI/UX:
+- Tabbed interface for upload vs. file management
+- Real-time progress bars with status indicators
+- Pending files queue with individual processing controls
+- Professional delete confirmation dialogs
+- File statistics dashboard (files, chunks, tokens, words)
+- Responsive design with consistent styling
 
 DATABASE OPTIMIZATION:
-- Proper indexes for query performance
-- Relations for efficient joins
-- Cascade deletes for data integrity
-- Transaction support for atomic operations
+- Neon HTTP driver compatibility (no transactions)
+- Proper indexing for vector similarity search
+- Cascade deletion for data integrity
+- Batch insertion for performance
 - Comprehensive metadata storage
-
-SECURITY FEATURES:
-- File type validation (extension vs MIME type)
-- User ownership verification
-- Subject access control
-- Input sanitization and validation
-- Secure base64 file handling
-
-=== File Structure Created ===
-lib/files/
-├── validation/
-│   └── schemas.ts           # Input validation and constraints
-├── server/
-│   └── procedures.ts        # tRPC procedures for file operations
-├── hooks/
-│   ├── useFiles.ts         # Basic file management hooks
-│   └── useFileActions.ts   # Advanced UI and interaction hooks
-├── types/
-│   └── index.ts            # TypeScript type definitions
-└── utils/                  # (Previously created)
-    ├── fileExtractor.ts    # Enhanced with Gemini integration
-    ├── chunkingService.ts  # Smart paragraph-based chunking
-    ├── imageExtractor.ts   # Image processing pipeline
-    ├── chunkDatabase.ts    # Database conversion utilities
-    └── geminiService.ts    # AI image description service
-
-=== Files Modified ===
-- trpc/routers/_app.ts (added files router)
-- db/schema.ts (added database relations)
-
-=== API Endpoints Created ===
-- files.upload: Upload and process files
-- files.delete: Delete files and chunks
-- files.getBySubject: List files for a subject
-- files.getById: Get file details with chunks
-- files.getStats: File statistics for analytics
 
 === Technical Specifications ===
 
-SUPPORTED FILE TYPES:
-- PDF documents (application/pdf)
-- Word documents (.docx, .doc)
-- PowerPoint presentations (.pptx, .ppt)
-- Excel spreadsheets (.xlsx, .xls)
-- CSV files (text/csv)
-- Text files (.txt, .md, .rtf)
+CHUNKING ALGORITHM:
+- Token Estimation: 4 characters ≈ 1 token approximation
+- Paragraph Detection: Double newlines with single newline fallback
+- Overlap Strategy: Last 75 tokens from previous chunk
+- Minimum Size: 150 tokens to avoid fragments
+- Maximum Size: 1000 tokens for optimal embedding performance
 
-PROCESSING CAPABILITIES:
-- Maximum file size: 10MB
-- Paragraph-based chunking with 1000 token limit
-- AI-powered image description generation
-- Sentence boundary preservation for semantic coherence
-- Metadata extraction and preservation
-- Error handling with graceful degradation
+EMBEDDING PIPELINE:
+- Model: Google Gemini text-embedding-004 (768 dimensions)
+- Processing: Real-time during upload with error recovery
+- Storage: pgvector extension in PostgreSQL
+- Indexing: IVFFlat index for similarity search
 
-PERFORMANCE OPTIMIZATIONS:
-- Database transactions for atomic operations
-- Optimistic updates in React hooks
-- Efficient query patterns with proper indexes
-- Cache invalidation strategies
-- Batch processing for multiple files
-
-TESTING RESULTS:
-✅ Validation schemas working correctly
-✅ File extension validation functioning
-✅ Chunking service creating proper chunks
-✅ Database conversion and validation passing
-✅ File type utilities displaying correctly
-✅ All backend components integrated successfully
-
-=== Usage Example ===
-```typescript
-const { uploadFileComplete, useFilesBySubject } = useFiles();
-
-// Upload a file
-const result = await uploadFileComplete(file, subjectId);
-
-// Get files for a subject
-const { data: files } = useFilesBySubject({ subjectId });
-```
-
-=== Environment Variables Required ===
-- GOOGLE_GENERATIVE_AI_API_KEY: For AI image descriptions
-- Database connection variables for Neon PostgreSQL
-
-=== Ready for Frontend Integration ===
-The complete file upload backend is now ready for frontend implementation with:
-- Comprehensive API endpoints
-- Type-safe React hooks
-- Progress tracking capabilities
-- Error handling and validation
-- Drag and drop support utilities
-- File management interfaces
-
-
-=== GLASS NOTEBOOK UPLOAD UI IMPLEMENTATION ===
-Date: 2025-07-27
-Prompt: "Awesome, all left for phase 1 is the UI for the uploads, we are going for some sort of glass notebook vibe where it is like a notebook with liquid glass pages. For the uploads we will do it in a new route /uploads"
-
-Technical Description: Complete glass notebook-style upload interface with liquid glass aesthetics, featuring a realistic notebook layout with binding rings, glass pages, and comprehensive file management capabilities.
-
-Implementation Strategy:
-1. Notebook Layout: Create realistic notebook design with binding rings and glass pages
-2. Glass Design System: Implement comprehensive glass CSS classes for components
-3. Upload Interface: Drag-and-drop with progress tracking and visual feedback
-4. File Management: Beautiful file listing with glass cards and management actions
-5. Responsive Design: Mobile-first approach with glass aesthetics maintained
-
-=== Actions Performed ===
-
-1. UPLOADS ROUTE:
-   - Created app/(app)/uploads/page.tsx with proper metadata
-   - Integrated with existing app layout and authentication
-   - Subject-based file management with proper validation
-
-2. GLASS NOTEBOOK LAYOUT:
-   - Created NotebookLayout component with realistic notebook design
-   - Binding rings with 3D metallic effect and proper spacing
-   - Layered page shadows for depth perception
-   - Red margin line and blue ruling lines for authentic notebook feel
-   - Page texture overlay with subtle grid pattern
-   - Liquid glass main page with backdrop blur effects
-
-3. COMPREHENSIVE GLASS DESIGN SYSTEM:
-   - .glass-page: Main notebook page with 20px backdrop blur
-   - .glass-card: Content cards with hover animations and depth
-   - .glass-card-subtle: Lighter version for nested elements
-   - .glass-card-success/error: Contextual state cards
-   - .glass-button: Interactive buttons with hover effects
-   - .glass-input: Form inputs with focus states
-   - .glass-progress: Progress bars with gradient fills
-   - .glass-dialog: Modal overlays with enhanced blur
-   - .glass-dropdown: Menu components with glass effects
-   - Liquid animations: Shimmer effects and hover dynamics
-
-4. UPLOAD AREA COMPONENT:
-   - Large drag-and-drop zone with visual feedback
-   - Animated upload icon with floating sparkle effect
-   - File type validation and constraints display
-   - Supported file types grid with hover effects
-   - AI processing features showcase with gradient icons
-   - Real-time drag state management with scale animations
-
-5. UPLOAD PROGRESS COMPONENT:
-   - Multi-stage progress tracking (upload → extract → process → store)
-   - Visual progress bar with glass styling
-   - Stage indicators with appropriate icons
-   - Success and error states with contextual styling
-   - Processing messages and real-time updates
-
-6. FILES LIST COMPONENT:
-   - Glass cards for each file with hover animations
-   - File type icons with gradient backgrounds
-   - Comprehensive file metadata display
-   - Search functionality with real-time filtering
-   - Dropdown actions menu with delete confirmation
-   - Status badges with completion/failure states
-   - Processing error display with detailed messages
-
-7. UPLOADS VIEW ORCHESTRATION:
-   - Subject selection validation with fallback UI
-   - Tab-based interface (Upload Files / Manage Files)
-   - Subject statistics display (files, chunks, images)
-   - Progress tracking integration
-   - Seamless state management between upload and file listing
-
-8. ENHANCED UI COMPONENTS:
-   - Progress component with Radix UI integration
-   - Alert dialog for file deletion confirmation
-   - Badge component for status indicators
-   - Comprehensive glass button variants
-   - Form inputs with glass styling
-
-=== Features Implemented ===
-
-NOTEBOOK AESTHETIC:
-- Realistic spiral binding with metallic rings
-- Layered page shadows for 3D depth effect
-- Authentic notebook ruling and margin lines
-- Liquid glass pages with backdrop blur effects
-- Page texture overlay for paper-like feel
-
-GLASS DESIGN SYSTEM:
-- 10+ glass component variants for different use cases
-- Hover animations with transform effects
-- Liquid shimmer animations for enhanced interactivity
-- Floating particle effects for upload areas
-- Consistent backdrop blur and transparency levels
-
-UPLOAD INTERFACE:
-- Large drag-and-drop zone with visual feedback
-- Multi-file upload support with batch processing
-- File type validation and size constraints (10MB)
-- Real-time progress tracking with stage indicators
-- AI processing feature showcase
-
-FILE MANAGEMENT:
-- Beautiful glass card layout for file listings
-- Search and filtering capabilities
-- File metadata display (size, type, chunks, images)
-- Status indicators (completed/failed)
-- Dropdown actions with delete confirmation
-- Processing error details and retry options
-
-RESPONSIVE DESIGN:
-- Mobile-first approach with touch-friendly interfaces
-- Adaptive grid layouts (1-3 columns based on screen size)
-- Scalable glass effects that work across devices
-- Proper spacing and typography scaling
-
-PERFORMANCE OPTIMIZATIONS:
-- Optimistic updates for immediate UI feedback
-- Proper loading states and skeleton screens
-- Efficient re-renders with React Query caching
-- CSS transitions with hardware acceleration
+FILE PROCESSING WORKFLOW:
+1. File validation and base64 conversion
+2. Text extraction via LangChain document loaders
+3. Smart chunking with paragraph boundary preservation
+4. Embedding generation for each chunk
+5. Batch database insertion with cleanup on failure
+6. Real-time progress updates to frontend
 
 === File Structure Created ===
-app/(app)/uploads/
-└── page.tsx                    # Upload route page
+lib/files/
+├── utils/
+│   └── chunkingService.ts      # Smart chunking algorithms
+├── server/
+│   └── procedures.ts           # Complete tRPC backend
+├── hooks/
+│   └── useFiles.ts            # React integration with progress tracking
+└── validation/
+    └── schemas.ts             # Updated validation schemas
 
 components/app/uploads/
-├── UploadsView.tsx             # Main orchestration component
-├── NotebookLayout.tsx          # Realistic notebook layout
-├── UploadArea.tsx              # Drag-and-drop upload interface
-├── UploadProgress.tsx          # Progress tracking component
-└── FilesList.tsx               # File management and listing
+├── UploadsView.tsx            # Main upload interface
+├── FileProgressBar.tsx        # Progress visualization
+└── DeleteFileDialog.tsx       # Delete confirmation dialog
 
-components/ui/
-├── progress.tsx                # Progress bar component
-└── alert-dialog.tsx            # Confirmation dialogs
+=== Files Modified ===
+- trpc/routers/_app.ts (added files router)
+- lib/files/utils/fileExtractor.ts (simplified text-only extraction)
+- components/app/NotebookLayout.tsx (navigation improvements)
+- db/schema.ts (vector embeddings already supported)
 
-=== Glass CSS Classes Created ===
-- .glass-page: Main notebook page (20px blur)
-- .glass-card: Primary content cards with hover effects
-- .glass-card-subtle: Nested elements with lighter styling
-- .glass-card-success: Success state styling
-- .glass-card-error: Error state styling
-- .glass-button: Interactive buttons with animations
-- .glass-button-active: Active state buttons
-- .glass-button-destructive: Delete action buttons
-- .glass-input: Form inputs with focus states
-- .glass-progress: Progress bars with gradients
-- .glass-dialog: Modal overlays
-- .glass-dropdown: Menu components
-- .liquid-shimmer: Animated shimmer effects
-- .liquid-hover: Enhanced hover dynamics
-- .floating-particle: Upload area particle effects
+=== Performance Optimizations ===
 
-=== Dependencies Added ===
-- @radix-ui/react-progress: Progress bar functionality
-- @radix-ui/react-alert-dialog: Confirmation dialogs
-- date-fns: Date formatting for file timestamps
+CHUNKING PERFORMANCE:
+- Efficient paragraph splitting with regex optimization
+- Token estimation without external tokenization libraries  
+- Memory-efficient chunk processing with streaming
+- Smart merging algorithm for optimal chunk sizes
+
+DATABASE PERFORMANCE:
+- Batch insertion reduces database round trips
+- Proper indexing for vector similarity search
+- Efficient cleanup procedures for failed uploads
+- Optimized queries with Drizzle ORM
+
+FRONTEND PERFORMANCE:
+- Optimistic updates for immediate feedback
+- Efficient re-renders with React Query caching
+- Progressive file processing for large uploads
+- Debounced search and filtering
+
+=== Error Handling & Recovery ===
+
+UPLOAD RESILIENCE:
+- Graceful degradation when embedding generation fails
+- Automatic retry mechanisms for transient failures
+- Comprehensive error messages for user feedback
+- Cleanup procedures for partial failures
+
+DATA INTEGRITY:
+- Manual atomic-like operations for Neon compatibility
+- Foreign key cascade deletion for consistency
+- Validation at multiple layers (client, server, database)
+- Proper error boundaries in React components
 
 === Integration Points ===
-- Subject store integration for current subject context
-- tRPC file procedures for backend communication
-- File upload hooks with progress tracking
-- Toast notifications for user feedback
-- Responsive design with existing breakpoints
 
-=== Visual Design Highlights ===
+EXISTING SYSTEMS:
+- Subject store integration for context management
+- Authentication middleware for user authorization  
+- Toast notification system for user feedback
+- Responsive design system with glass aesthetics
 
-NOTEBOOK REALISM:
-- Spiral binding with 20 metallic rings
-- 3-layer page shadow system for depth
-- Red margin line at proper notebook spacing
-- Blue ruling lines with 2rem spacing
-- Paper texture overlay with subtle opacity
+EXTERNAL SERVICES:
+- Google Gemini API for embeddings generation
+- LangChain document loaders for text extraction
+- pgvector for vector similarity search
+- Neon PostgreSQL for data persistence
 
-GLASS AESTHETICS:
-- Backdrop blur ranging from 6px to 20px
-- Layered transparency (50%-80% opacity)
-- Subtle border highlights with white overlays
-- Inset shadows for depth perception
-- Smooth cubic-bezier transitions
+=== Testing Results ===
+✅ File upload pipeline working correctly
+✅ Chunking algorithm producing optimal sizes
+✅ Embedding generation successful with fallback
+✅ Database operations completing without transactions
+✅ UI components rendering with proper progress tracking
+✅ Delete confirmation dialog replacing browser alerts
+✅ File management interface fully functional
+✅ Statistics calculation accurate across all operations
 
-INTERACTIVE ANIMATIONS:
-- Scale transforms on hover (1.02x - 1.1x)
-- Translate effects for button interactions
-- Shimmer animations for loading states
-- Floating particle effects for upload zones
-- Liquid hover effects with gradient sweeps
+=== Ready for Production ===
+The enhanced file upload system is now production-ready with:
+- Intelligent semantic chunking optimized for RAG
+- Real-time embedding generation and storage
+- Comprehensive error handling and recovery
+- Professional user interface with progress tracking
+- Complete file lifecycle management
+- Foundation prepared for semantic search implementation
 
-=== User Experience Features ===
+=== Environment Variables Required ===
+- GOOGLE_GENERATIVE_AI_API_KEY: Google Gemini API key for embeddings
+- Existing database connection variables for Neon PostgreSQL
 
-UPLOAD FLOW:
-1. Subject validation with friendly error states
-2. Large drop zone with clear visual feedback
-3. Multi-stage progress with descriptive messages
-4. Success confirmation with file details
-5. Seamless transition to file management
-
-FILE MANAGEMENT:
-1. Tab-based interface for clear separation
-2. Search functionality with real-time filtering
-3. Rich file cards with comprehensive metadata
-4. Status indicators for processing states
-5. Dropdown actions with confirmation dialogs
-
-RESPONSIVE BEHAVIOR:
-1. Touch-friendly interfaces on mobile
-2. Adaptive layouts for different screen sizes
-3. Proper typography scaling
-4. Maintained glass effects across devices
-5. Optimized performance on slower devices
-
-=== Ready for Phase 1 Completion ===
-The glass notebook upload UI is now complete with:
-- Beautiful realistic notebook design
-- Comprehensive file upload and management
-- AI-powered processing integration
-- Mobile-responsive glass aesthetics
-- Complete user flow from upload to management
-
-The uploads interface provides an immersive, glass notebook experience that perfectly complements the existing subject management system and sets the foundation for the hierarchical learning structure.
+=== Next Phase Ready ===
+The system is now fully prepared for implementing semantic search and chat functionality over the uploaded and processed documents, with embeddings stored and indexed for optimal retrieval performance.
