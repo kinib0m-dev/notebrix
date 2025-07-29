@@ -23,20 +23,22 @@ Search Optimization: Build relevance scoring algorithms and query optimization f
 Incremental Updates: Support for adding new content without reprocessing entire document collections
 
 Phase 3: AI Content Generation
-Topic Hierarchy Generation
+Hierarchical Topic Extraction System
 
-Content Analysis: Use Gemini Pro to analyze uploaded materials and extract logical topic structure
-Hierarchy Creation: Generate 4-level topic hierarchy (Subject → Topic → Subtopic → Concept) with proper ordering
-Content Mapping: Map extracted content chunks to appropriate topics for contextual retrieval
-Regeneration System: Allow users to regenerate topic structure when adding new materials
+Batch Processing Architecture: Implement chunked processing system that divides course materials into manageable batches (15-20 chunks per batch) to stay within Gemini API rate limits and token constraints
+Partial Index Generation: Process each batch through Gemini to generate partial topic hierarchies containing relevant subjects, topics, subtopics, and concepts
+Index Merging System: Create intelligent merging algorithm that combines partial indexes into cohesive 4-level hierarchy, resolving duplicates and maintaining logical relationships
+Rate Limit Management: Implement exponential backoff and queue management to handle API rate limiting gracefully during batch processing
+Progress Tracking: Build real-time progress indicators showing batch processing status and estimated completion time
 
 Educational Content Synthesis
 
-Content Generation: Create educational explanations, summaries, and visual components for each topic
+Content Generation: Create educational explanations, summaries, and visual components for each topic using the hierarchical structure
 Source Attribution: Implement system to distinguish between course material content and AI-generated knowledge
 Mathematical Rendering: Integrate KaTeX for rendering complex mathematical expressions and formulas
 Code Highlighting: Add syntax highlighting for code snippets with language detection
 Visual Components: Generate diagrams, flowcharts, and concept maps using AI-driven visualization
+Batch Optimization: Optimize content generation by processing related topics in batches to maintain context consistency
 
 Phase 4: Interactive Notebook Interface
 Glass Morphism Design Implementation
@@ -48,25 +50,26 @@ Theme System: Implement consistent visual hierarchy and spacing throughout the i
 
 Navigation System
 
-Hierarchical Navigation: Build intuitive topic browsing with expandable/collapsible sections
+Hierarchical Navigation: Build intuitive topic browsing with expandable/collapsible sections based on the 4-level hierarchy
 Breadcrumb System: Dynamic breadcrumb navigation with click-to-jump functionality
 Search Integration: Global search across topics with real-time suggestions and filtering
 State Persistence: Maintain navigation state across browser sessions using Zustand and localStorage
+Batch Loading: Implement lazy loading for topic sections to improve initial page load performance
 
 Content Rendering
 
 Dynamic Layout: Flexible content layout system supporting different content types and media
 Interactive Elements: Clickable diagrams, expandable sections, and interactive learning components
-Loading States: Smooth loading animations and skeleton screens for better user experience
-Error Boundaries: Graceful error handling with recovery options for failed content generation
+Loading States: Smooth loading animations and skeleton screens for hierarchical content generation
+Error Boundaries: Graceful error handling with recovery options for failed batch processing or content generation
 
 Phase 5: Chat Integration
 Contextual AI Assistant
 
 Chat Interface: Build real-time chat interface with typing indicators and message history
-Context Awareness: Integrate current topic context into chat responses for relevant assistance
+Context Awareness: Integrate current topic context and hierarchical position into chat responses
 Conversation Threading: Maintain conversation continuity within subject boundaries
-Smart Prompting: Engineer prompts for educational, helpful responses that complement course materials
+Smart Prompting: Engineer prompts for educational responses that leverage the hierarchical topic structure
 
 Conversation Management
 
@@ -81,65 +84,65 @@ Text-to-Speech Integration
 Voice Synthesis: Integrate ElevenLabs API for high-quality, natural-sounding speech generation
 Audio Controls: Build playback interface with speed control, pause/resume, and progress tracking
 Voice Selection: Offer multiple voice options and language support for international users
-Background Playback: Enable audio playback during notebook navigation for seamless learning
+Background Playback: Enable audio playbook during notebook navigation for seamless learning
 
 Mock Exam Generation
 
-Question Generation: Use AI to create practice questions based on course materials and topic coverage
+Question Generation: Use hierarchical topic structure to create balanced practice questions across all course concepts
 Multiple Formats: Support various question types including multiple choice, short answer, and essay questions
 Institution Templates: Create exam format templates matching specific educational institutions
-Performance Analytics: Track quiz performance and provide learning recommendations based on results
+Performance Analytics: Track quiz performance by topic hierarchy level and provide targeted learning recommendations
 
 Progress Tracking System
 
-Learning Analytics: Track user progress through topics and concepts with visual progress indicators
-Mastery Assessment: Implement algorithms to determine topic mastery based on interaction patterns
-Spaced Repetition: Suggest review schedules based on forgetting curve and individual learning patterns
-Achievement System: Gamification elements to encourage consistent learning and goal achievement
+Learning Analytics: Track user progress through hierarchical topic structure with visual progress indicators
+Mastery Assessment: Implement algorithms to determine topic mastery based on hierarchical coverage and interaction patterns
+Spaced Repetition: Suggest review schedules based on topic hierarchy importance and individual learning patterns
+Achievement System: Gamification elements tied to completing topic branches and mastering concept clusters
 
 Phase 7: Performance & Scalability
 Optimization Implementation
 
-Caching Layer: Implement Redis caching for frequently accessed content and API responses
-Database Optimization: Add query optimization, indexing strategies, and connection pooling
-CDN Integration: Set up content delivery network for static assets and generated content
-Performance Monitoring: Implement comprehensive monitoring with alerts for performance degradation
+Caching Layer: Implement Redis caching for processed topic hierarchies, partial indexes, and frequently accessed content
+Database Optimization: Add query optimization for hierarchical data retrieval, indexing strategies, and connection pooling
+CDN Integration: Set up content delivery network for static assets and generated hierarchical content
+Performance Monitoring: Monitor batch processing performance and API usage patterns with alerts for bottlenecks
 
 Scalability Preparation
 
-Load Testing: Conduct thorough load testing to identify bottlenecks and optimization opportunities
-Auto-scaling: Configure automatic scaling for database connections and compute resources
-Backup Strategy: Implement automated backup and disaster recovery procedures
-Security Audit: Conduct comprehensive security review and implement recommended improvements
+Load Testing: Test hierarchical processing system under various document sizes and concurrent user loads
+Auto-scaling: Configure automatic scaling for batch processing workers and database connections
+Backup Strategy: Implement automated backup for topic hierarchies and partial processing states
+Security Audit: Comprehensive security review focusing on batch processing and data handling
 
 Phase 8: Quality Assurance & Launch
 Testing & Validation
 
-Unit Testing: Comprehensive test coverage for all core functionality and API endpoints
-Integration Testing: End-to-end testing of complete user workflows and system interactions
-Performance Testing: Validate performance targets under various load conditions
-User Acceptance Testing: Conduct testing with real users and course materials to validate functionality
+Unit Testing: Test hierarchical processing logic, batch merging algorithms, and API rate limiting
+Integration Testing: End-to-end testing of complete file processing and topic generation workflows
+Performance Testing: Validate batch processing performance under various document types and sizes
+User Acceptance Testing: Test hierarchical navigation and content organization with real course materials
 
 Production Deployment
 
-CI/CD Pipeline: Set up automated deployment pipeline with testing and rollback capabilities
-Monitoring Setup: Implement production monitoring, logging, and alerting systems
-Documentation: Create comprehensive API documentation and user guides
-Launch Strategy: Phased rollout with feature flags and gradual user onboarding
+CI/CD Pipeline: Set up automated deployment with testing for hierarchical processing components
+Monitoring Setup: Production monitoring for batch processing performance and API usage
+Documentation: Document hierarchical processing architecture and troubleshooting guides
+Launch Strategy: Phased rollout with monitoring of processing performance and user experience
 
 Phase 9: Post-Launch Enhancements
 User Feedback Integration
 
-Analytics Dashboard: Build admin dashboard for monitoring user engagement and system performance
-Feedback System: Implement user feedback collection and feature request tracking
-A/B Testing: Set up experimentation framework for testing new features and improvements
-Continuous Improvement: Regular feature updates based on user feedback and usage analytics
+Analytics Dashboard: Monitor hierarchical processing success rates and user engagement with generated topics
+Feedback System: Collect user feedback on topic organization quality and processing accuracy
+A/B Testing: Test different batch sizes and merging strategies for optimal performance
+Continuous Improvement: Iterate on hierarchical algorithms based on user behavior and processing metrics
 
 Mobile Application Development
 
-React Native App: Develop companion mobile application for offline studying and content access
-Offline Sync: Implement offline capability with synchronization when connection is restored
-Push Notifications: Add study reminders and progress notifications to encourage consistent usage
-Mobile Optimization: Optimize all features for mobile interaction patterns and screen sizes
+React Native App: Develop mobile app with offline access to processed hierarchical content
+Offline Sync: Sync topic hierarchies and enable offline studying with background synchronization
+Push Notifications: Send study reminders based on hierarchical progress and spaced repetition schedules
+Mobile Optimization: Optimize hierarchical navigation for mobile interaction patterns
 
-This implementation plan provides a comprehensive roadmap for building NoteBrix as a robust, scalable, and user-friendly visual learning platform that transforms traditional study materials into an interactive, intelligent learning experience.
+This implementation plan provides a comprehensive roadmap leveraging hierarchical processing to efficiently handle large course materials while maintaining cost-effectiveness and optimal user experience.

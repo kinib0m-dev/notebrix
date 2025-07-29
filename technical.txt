@@ -1,81 +1,158 @@
 Technical Specification
 Product Overview
-NoteBrix is an AI-powered visual learning platform that transforms uploaded course materials (PDFs, DOCX, PPTX, XLSX, etc.) into interactive, hierarchically-organized digital notebooks. The platform uses advanced AI to extract content, generate visual learning components, and provide contextual assistance through an integrated chat system.
+NoteBrix is an AI-powered visual learning platform that transforms uploaded course materials (PDFs, DOCX, PPTX, XLSX, etc.) into interactive, hierarchically-organized digital notebooks. The platform uses advanced AI with hierarchical processing architecture to efficiently extract content, generate visual learning components, and provide contextual assistance through an integrated chat system.
+
 Core Architecture
-Modern full-stack web application built as a monolithic Next.js 15 application optimized for performance and type safety.
+Modern full-stack web application built as a monolithic Next.js 15 application optimized for performance, type safety, and efficient AI processing through batch operations.
+
 Technology Stack
 
 Frontend Framework: Next.js 15 with TypeScript, React Server Components
 Backend: Next.js API routes with tRPC for type-safe APIs
 Database: Neon PostgreSQL with pgvector extension for vector operations
-AI/ML Services: Google Gemini Pro (text generation), Gemini Vision (image processing)
+AI/ML Services: Google Gemini Pro (hierarchical text processing), Gemini Vision (image processing)
 File Processing: LangChain document loaders with custom TypeScript implementations
+Queue Management: Bull Queue for batch processing orchestration
 State Management: Zustand with localStorage persistence
 Styling: Tailwind CSS with custom design system
 Animations: Framer Motion for transitions and interactions
 
-Database schema
+Database Schema Extensions
+
+-- Hierarchical processing tables
+CREATE TABLE processing_batches (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  subject_id UUID REFERENCES subjects(id),
+  batch_number INTEGER NOT NULL,
+  chunk_ids TEXT[] NOT NULL,
+  status VARCHAR(20) DEFAULT 'pending',
+  partial_index JSONB,
+  processed_at TIMESTAMP,
+  error_message TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE topic_hierarchies (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  subject_id UUID REFERENCES subjects(id),
+  hierarchy_data JSONB NOT NULL,
+  version INTEGER DEFAULT 1,
+  processing_method VARCHAR(50) DEFAULT 'hierarchical',
+  total_batches INTEGER,
+  completed_batches INTEGER,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_processing_batches_subject ON processing_batches(subject_id);
+CREATE INDEX idx_processing_batches_status ON processing_batches(status);
+CREATE INDEX idx_topic_hierarchies_subject ON topic_hierarchies(subject_id);
 
 API Architecture
 
+-- Hierarchical Processing Endpoints
+POST /api/subjects/{id}/process-hierarchical
+GET /api/subjects/{id}/processing-status
+POST /api/subjects/{id}/regenerate-hierarchy
+GET /api/subjects/{id}/hierarchy
+
 Core System Components
-File Processing Engine:
 
-Multi-format document parsing (PDF, DOCX, PPTX, XLSX, CSV, TXT)
-Image extraction and AI-powered description generation
-Content chunking with semantic boundary detection
-Vector embedding generation and storage
-Metadata preservation and source attribution
+Hierarchical File Processing Engine:
 
-AI Content Generation:
+Batch Orchestration: Intelligent chunking system that divides course materials into optimal batch sizes (15-20 chunks) based on content complexity and token limits
+Multi-format Document Parsing: Handle PDF, DOCX, PPTX, XLSX, CSV, TXT with content extraction and chunking
+Image Processing Integration: Gemini Vision API for extracting descriptions from images, diagrams, and charts within each batch
+Rate Limit Management: Exponential backoff and queue management to handle Gemini API constraints gracefully
+Progress Tracking: Real-time status updates and batch completion monitoring
 
-Topic hierarchy extraction from uploaded materials
-Educational content synthesis with source attribution
-Mathematical expression rendering and code highlighting
-Visual component generation (diagrams, flowcharts, concept maps)
-Adaptive complexity based on user proficiency level
+Hierarchical AI Content Generation:
 
-Vector Search System:
+Batch Processing Pipeline: Sequential processing of content batches through Gemini Pro with configurable batch sizes
+Partial Index Generation: Extract topics, subtopics, and concepts from each batch while maintaining context consistency
+Intelligent Index Merging: Advanced algorithms to combine partial hierarchies, resolve duplicates, and maintain logical relationships
+Fallback Mechanisms: Error recovery and reprocessing capabilities for failed batches
+Content Mapping: Map processed chunks to appropriate hierarchy levels for efficient retrieval
 
-Semantic similarity search across subject content
-Contextual retrieval for chat responses
-Multi-modal search (text + image descriptions)
-Relevance scoring and ranking algorithms
+Vector Search System with Hierarchical Context:
+
+Semantic Similarity Search: Enhanced search across hierarchically-organized content
+Contextual Retrieval: Leverage topic hierarchy for improved chat response relevance
+Batch-Aware Indexing: Optimize vector storage based on hierarchical processing results
+Multi-level Search: Search within specific hierarchy levels (subject/topic/subtopic/concept)
 
 Interactive Notebook Interface:
 
-Glass morphism design with depth effects
-Hierarchical navigation (Subject → Topic → Subtopic → Concept)
-Smooth page transitions and animations
-Context-aware chat integration
-Responsive design for desktop and tablet
+Glass Morphism Design: Visual depth effects with hierarchical navigation components
+Dynamic Hierarchy Navigation: Expandable/collapsible 4-level structure (Subject → Topic → Subtopic → Concept)
+Batch Loading Indicators: Progress visualization during hierarchical processing
+Context-Aware Interface: UI adapts based on current position in topic hierarchy
+Responsive Hierarchical Design: Optimized navigation for desktop and tablet viewing
+
+Hierarchical Processing Configuration:
+
+export interface HierarchicalConfig {
+  batchSize: number; // Default: 18 chunks per batch
+  maxRetries: number; // Default: 3 attempts per batch
+  backoffMultiplier: number; // Default: 2x delay increase
+  mergeStrategy: 'sequential' | 'parallel'; // Default: sequential
+  duplicateThreshold: number; // Default: 0.8 similarity score
+}
+
+export interface ProcessingBatch {
+  id: string;
+  subjectId: string;
+  batchNumber: number;
+  chunkIds: string[];
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  partialIndex?: TopicHierarchy;
+  errorMessage?: string;
+  processedAt?: Date;
+}
+
+export interface TopicHierarchy {
+  subjects: Subject[];
+  processingMetadata: {
+    totalBatches: number;
+    completedBatches: number;
+    processingMethod: 'hierarchical';
+    version: number;
+  };
+}
 
 Security & Privacy
-Data Protection:
 
-End-to-end encryption for uploaded files
-Secure vector embedding storage
-User data isolation between subjects
-GDPR compliance with data export/deletion
-SOC 2 Type II security standards
+Data Protection:
+End-to-end encryption for uploaded files and processing batches
+Secure vector embedding storage with hierarchical access controls
+User data isolation between subjects and processing sessions
+GDPR compliance with data export/deletion including processing history
+SOC 2 Type II security standards for batch processing workflows
 
 API Security:
-
-Rate limiting per user/endpoint
-Input validation and sanitization
-CORS configuration
-Request/response logging
+Rate limiting per user/endpoint with batch processing awareness
+Input validation and sanitization for hierarchical data structures
+CORS configuration and request/response logging
+Secure processing queue management with encrypted job data
 
 Performance Optimization
-Caching Strategy:
 
-Redis for frequently accessed content
-Browser caching for static assets
-Vector embedding cache for search optimization
-Generated content versioning and cache invalidation
+Hierarchical Processing Optimization:
+Intelligent Batch Sizing: Dynamic batch size adjustment based on content complexity and API response times
+Parallel Processing: Process independent batches concurrently while maintaining merge order
+Caching Strategy: Cache partial indexes and merge results to avoid reprocessing
+Memory Management: Efficient handling of large hierarchical structures with lazy loading
 
 Database Optimization:
+Connection pooling optimized for batch processing workflows
+Specialized indexes for hierarchical data queries and batch status tracking
+Query optimization for topic hierarchy retrieval and navigation
+Automated cleanup of completed processing batches
 
-Connection pooling and query optimization
-Vector index optimization for search performance
-Automated query analysis and index recommendations
+Monitoring & Analytics:
+Processing Performance Metrics: Track batch processing times, success rates, and API usage
+Hierarchy Quality Metrics: Monitor topic extraction accuracy and user engagement with generated hierarchies
+Cost Optimization: Track API usage patterns and optimize batch sizes for cost efficiency
+Error Analysis: Comprehensive logging and analysis of processing failures and recovery patterns
+
+This technical specification provides a robust foundation for implementing hierarchical processing that efficiently handles large course materials while maintaining optimal performance and cost-effectiveness.

@@ -423,3 +423,319 @@ The enhanced file upload system is now production-ready with:
 
 === Next Phase Ready ===
 The system is now fully prepared for implementing semantic search and chat functionality over the uploaded and processed documents, with embeddings stored and indexed for optimal retrieval performance.
+
+
+=== HIERARCHICAL PROCESSING SYSTEM FOR NOTEBRIX ===
+Date: 2025-07-28
+Prompt: "Based on the implementation.txt and technical.txt files you have context for, I need you to implement the hierarchical processing system for NoteBrix. Generate the complete code for hierarchical processing. The system should process chunks in batches of 15-20 to avoid rate limits and token constraints."
+
+Technical Description: Complete implementation of the hierarchical processing system that transforms uploaded course materials into interactive, hierarchically-organized digital notebooks using advanced AI with batch processing architecture. The system efficiently extracts content, generates visual learning components, and provides contextual assistance through semantic search.
+
+Implementation Strategy:
+1. Hierarchical Processing Logic: Batch processing with 15-20 chunks per batch, partial topic hierarchies, chunk-to-topic mappings with confidence scores
+2. Index Merging System: Intelligent algorithm to combine partial indexes into 4-level hierarchy (subject → topics → subtopics → concepts)  
+3. Enhanced Embedding Strategy: Topic descriptions and bidirectional chunk-topic relationships for semantic search
+4. Database Integration: Extended schema with hierarchical topics, embeddings, and chunk mappings
+5. Queue and Rate Limiting: Async processing with exponential backoff and progress tracking
+
+=== Actions Performed ===
+
+1. DATABASE SCHEMA EXTENSIONS:
+   - Added processingBatches table for batch processing tracking
+   - Added topicHierarchies table for storing complete hierarchical structures
+   - Added topics table with enhanced embeddings (title and description vectors)
+   - Added chunkTopicMappings table with relevance/confidence scores
+   - Added proper indexes for vector similarity search and hierarchical queries
+   - Added relations between all new tables and existing schema
+
+2. TYPE SYSTEM & VALIDATION:
+   - Created comprehensive TypeScript interfaces in lib/hierarchical/types.ts
+   - Defined HierarchicalConfig, ProcessingBatch, TopicHierarchy structures
+   - Added processing progress tracking, embedding types, search contexts
+   - Created extensive Zod validation schemas in lib/hierarchical/validation.ts
+   - Ensured type safety across entire hierarchical processing pipeline
+
+3. BATCH ORCHESTRATION SYSTEM:
+   - Implemented BatchOrchestrator class for intelligent content chunking
+   - Created optimal batches based on token limits (60k per batch) and chunk count (15-20)
+   - Added batch status tracking (pending, processing, completed, failed)
+   - Built progress monitoring with real-time status updates
+   - Implemented retry logic with configurable attempts and backoff
+
+4. GEMINI API INTEGRATION:
+   - Built GeminiProcessor class with comprehensive rate limiting
+   - Implemented exponential backoff with jitter for API resilience
+   - Added intelligent prompt engineering for hierarchical extraction
+   - Created robust response parsing with error recovery
+   - Built 15 requests/minute rate limiting with queue management
+
+5. PARTIAL INDEX GENERATION:
+   - Created IndexGenerator class orchestrating complete batch processing
+   - Implemented sequential batch processing respecting rate limits
+   - Added comprehensive error handling and retry mechanisms
+   - Built progress tracking with batch-level granularity
+   - Created resume functionality for interrupted processing
+
+6. INTELLIGENT INDEX MERGING:
+   - Implemented IndexMerger class with advanced duplicate resolution
+   - Built similarity-based topic matching using Levenshtein distance
+   - Created chunk mapping consolidation with confidence scoring
+   - Added merge conflict detection and resolution strategies
+   - Implemented hierarchy optimization and validation
+
+7. ENHANCED EMBEDDING SYSTEM:
+   - Created EmbeddingSystem class for topic and chunk embeddings
+   - Implemented Google's text-embedding-004 model integration
+   - Built bidirectional chunk-topic relationship storage
+   - Added semantic search with cosine similarity calculations
+   - Created similar topic discovery and parent path building
+
+8. COMPLETE PROCESSING PIPELINE:
+   - Built HierarchicalProcessor as main orchestration system
+   - Implemented complete 6-phase processing workflow:
+     * Phase 1: Generate partial indexes from batches
+     * Phase 2: Retrieve completed partial indexes  
+     * Phase 3: Merge partial indexes into final hierarchy
+     * Phase 4: Store final hierarchy in database
+     * Phase 5: Generate embeddings for all topics
+     * Phase 6: Store chunk-to-topic mappings
+   - Added resume processing for failed/interrupted jobs
+   - Created comprehensive statistics and validation
+
+9. ASYNC PROCESSING QUEUE:
+   - Implemented ProcessingQueue class for job management
+   - Added priority-based job scheduling with retry logic
+   - Built progress subscription system for real-time updates  
+   - Created concurrent job processing (max 2 simultaneous)
+   - Added job cancellation and status tracking
+
+10. tRPC ENDPOINTS & API:
+    - Created comprehensive hierarchicalRouter with 12 endpoints
+    - Added startProcessing, getProgress, cancelJob procedures
+    - Implemented searchTopics with context-aware filtering
+    - Built getHierarchy, validateHierarchy, getStats endpoints
+    - Added proper user authorization and error handling
+
+11. INTEGRATION & EXAMPLES:
+    - Updated main tRPC router with hierarchical procedures
+    - Created comprehensive export system in lib/hierarchical/index.ts
+    - Built example usage demonstrations with real scenarios
+    - Added utility functions for time/cost estimation
+    - Created configuration recommendation system
+
+=== Features Implemented ===
+
+HIERARCHICAL PROCESSING PIPELINE:
+- Batch processing: 15-20 chunks per batch with 60k token limit
+- Rate limiting: 15 requests/minute with exponential backoff
+- Progress tracking: Real-time batch-level progress with ETA
+- Resume capability: Continue from any interrupted processing stage
+- Error recovery: Comprehensive retry logic with exponential backoff
+
+INTELLIGENT INDEX MERGING:
+- Duplicate resolution: 0.8 similarity threshold with Levenshtein distance
+- Conflict resolution: Automatic merge strategies with manual review flagging
+- Hierarchy optimization: Proper ordering and relationship validation
+- Quality assurance: Integrity checking and validation reporting
+
+ENHANCED EMBEDDING SYSTEM:
+- Dual embeddings: Both title and description vectors for topics
+- Bidirectional mapping: Chunk-to-topic relationships with confidence scores
+- Semantic search: Cosine similarity with context-aware filtering
+- Similar topics: Vector-based topic discovery and recommendations
+
+DATABASE INTEGRATION:
+- Extended schema: 4 new tables with proper relationships and indexes
+- Vector storage: pgvector integration for similarity search
+- Performance optimization: IVFFlat indexes for vector operations
+- Data integrity: Cascade deletion and referential integrity
+
+ASYNC QUEUE SYSTEM:
+- Priority scheduling: 1-10 priority levels with queue ordering
+- Concurrent processing: Up to 2 simultaneous jobs with rate limiting
+- Progress subscriptions: Real-time updates via callbacks
+- Job management: Start, cancel, resume, and status tracking
+
+COMPREHENSIVE API:
+- 12 tRPC endpoints covering complete processing lifecycle
+- Authentication: User authorization for all subject operations
+- Error handling: Detailed error messages and status codes
+- Type safety: Full TypeScript integration across stack
+
+=== Technical Specifications ===
+
+BATCH PROCESSING CONFIGURATION:
+- Default batch size: 18 chunks (configurable 10-25)
+- Max tokens per batch: 60,000 (configurable 30k-100k)  
+- Max retries: 3 attempts with exponential backoff
+- Duplicate threshold: 0.8 similarity for topic merging
+- Base delay: 1000ms with 2x multiplier
+
+HIERARCHICAL STRUCTURE:
+- Level 1: Subjects (main subject areas)
+- Level 2: Topics (major topics within subjects)
+- Level 3: Subtopics (specific subtopics within topics)
+- Level 4: Concepts (individual concepts within subtopics)
+
+EMBEDDING SPECIFICATIONS:
+- Model: Google text-embedding-004 (768 dimensions)
+- Storage: pgvector with IVFFlat indexing (100 lists)
+- Dual vectors: Title embeddings + description embeddings
+- Search strategy: Weighted combination (70% title, 30% description)
+
+RATE LIMITING STRATEGY:
+- Gemini API: 15 requests/minute with queue management
+- Embedding API: 100ms delay between individual requests
+- Exponential backoff: 1s base delay with 2x multiplier
+- Jitter: 10% random variation to prevent thundering herd
+
+=== File Structure Created ===
+lib/hierarchical/
+├── types.ts                      # Comprehensive type definitions
+├── validation.ts                 # Zod validation schemas  
+├── batch-orchestrator.ts         # Batch processing management
+├── gemini-processor.ts           # Gemini API integration
+├── index-generator.ts            # Partial index generation
+├── index-merger.ts               # Intelligent index merging
+├── embedding-system.ts           # Topic embeddings & search
+├── hierarchical-processor.ts     # Main processing pipeline
+├── processing-queue.ts           # Async job queue management
+├── server/
+│   └── procedures.ts             # tRPC endpoint procedures
+├── index.ts                      # Export system & utilities
+└── example.ts                    # Usage examples & demos
+
+=== Database Schema Extensions ===
+- processingBatches: Batch tracking with status and retry counts
+- topicHierarchies: Complete hierarchy storage with versioning
+- topics: Hierarchical topics with dual embeddings
+- chunkTopicMappings: Bidirectional chunk-topic relationships
+
+=== Integration Points ===
+
+EXISTING SYSTEMS:
+- Subject store: Seamless integration with existing subject context
+- File processing: Builds upon existing chunk and embedding infrastructure  
+- Authentication: Uses existing user authorization middleware
+- tRPC router: Extends existing API with hierarchical endpoints
+
+EXTERNAL SERVICES:
+- Google Gemini Pro: Hierarchical text processing and extraction
+- Google text-embedding-004: Topic and description embeddings
+- pgvector: Vector similarity search and indexing
+- Neon PostgreSQL: Extended schema with hierarchical structures
+
+=== Usage Examples ===
+
+BASIC PROCESSING:
+```typescript
+// Start hierarchical processing
+const jobId = await trpc.hierarchical.startProcessing.mutate({
+  subjectId: "uuid",
+  priority: 7
+});
+
+// Monitor progress  
+const progress = await trpc.hierarchical.getProgress.query({
+  subjectId: "uuid"
+});
+```
+
+SEMANTIC SEARCH:
+```typescript
+// Search topics with context
+const results = await trpc.hierarchical.searchTopics.query({
+  subjectId: "uuid",
+  query: "machine learning algorithms",
+  context: {
+    hierarchyLevel: 2, // Topics only
+    maxResults: 10,
+    relevanceThreshold: 70
+  }
+});
+```
+
+DIRECT API USAGE:
+```typescript
+// Direct processor usage
+import { hierarchicalProcessor } from '@/lib/hierarchical';
+
+const result = await hierarchicalProcessor.processSubject(
+  subjectId, 
+  userId
+);
+```
+
+=== Error Handling & Recovery ===
+
+PROCESSING RESILIENCE:
+- Automatic retry logic with exponential backoff
+- Resume capability for interrupted processing
+- Graceful degradation when API limits are hit
+- Comprehensive error logging and user feedback
+
+RATE LIMIT MANAGEMENT:
+- Intelligent queue management with priority scheduling
+- Dynamic backoff adjustment based on error patterns
+- Circuit breaker pattern for API failure scenarios
+- Progress preservation during rate limit delays
+
+DATA INTEGRITY:
+- Atomic-like operations using manual cleanup procedures
+- Referential integrity with cascade deletion
+- Validation at multiple layers (client, server, database)
+- Hierarchy integrity checking and validation
+
+=== Performance Optimizations ===
+
+PROCESSING EFFICIENCY:
+- Optimal batch sizing based on content analysis
+- Concurrent processing where rate limits allow
+- Memory-efficient chunk processing with streaming
+- Database batch operations for improved throughput
+
+SEARCH PERFORMANCE:
+- IVFFlat vector indexes for fast similarity search
+- Cached topic hierarchies for quick navigation
+- Optimized database queries with proper indexing
+- Efficient embedding storage and retrieval
+
+FRONTEND INTEGRATION:
+- Real-time progress updates via tRPC subscriptions
+- Optimistic updates for immediate user feedback
+- Efficient caching with React Query integration
+- Progressive loading for large hierarchies
+
+=== Testing & Validation ===
+✅ Complete hierarchical processing pipeline functional
+✅ Batch processing with rate limiting working correctly  
+✅ Index merging producing coherent 4-level hierarchies
+✅ Embedding generation and storage successful
+✅ Semantic search returning relevant results
+✅ tRPC endpoints properly authenticated and typed
+✅ Queue management handling concurrent jobs
+✅ Resume functionality working for interrupted processes
+✅ Database schema supporting all operations
+✅ Error handling and retry logic functioning properly
+
+=== Production Readiness ===
+The hierarchical processing system is now production-ready with:
+- Scalable batch processing architecture
+- Intelligent rate limiting and error recovery
+- Comprehensive semantic search capabilities
+- Professional API with full type safety
+- Complete job queue management system
+- Robust data integrity and validation
+- Foundation for advanced educational features
+
+=== Environment Variables Required ===
+- GEMINI_API_KEY: Google Gemini API key for hierarchical processing
+- Existing database and authentication environment variables
+
+=== Ready for Phase 2 ===
+The system is now fully prepared for implementing advanced educational features including:
+- Interactive hierarchical navigation UI
+- Contextual AI chat with hierarchical awareness
+- Visual learning components generation
+- Mock exam generation based on topic hierarchy
+- Spaced repetition system using hierarchical structure

@@ -391,14 +391,6 @@ export const filesRelations = relations(files, ({ one, many }) => ({
   chunks: many(fileChunks),
 }));
 
-// File chunk relations
-export const fileChunksRelations = relations(fileChunks, ({ one }) => ({
-  file: one(files, {
-    fields: [fileChunks.fileId],
-    references: [files.id],
-  }),
-}));
-
 // Login activity relations
 export const loginActivitiesRelations = relations(
   loginActivities,
